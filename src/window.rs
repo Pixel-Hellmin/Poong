@@ -128,6 +128,18 @@ impl Window {
                         };
                         println!("WM_MOUSEMOVE, x = {}, y = {}", point.X, point.Y);
                     },
+                    WM_LBUTTONDOWN => {
+                        println!("WM_LBUTTONDOWN");
+                    },
+                    WM_LBUTTONUP => {
+                        println!("WM_LBUTTONUP");
+                    },
+                    WM_RBUTTONDOWN => {
+                        println!("WM_RBUTTONDOWN");
+                    },
+                    WM_RBUTTONUP => {
+                        println!("WM_RBUTTONUP");
+                    },
                     WM_SYSKEYDOWN => println!("WM_SYSKEYDOWN"),
                     WM_SYSKEYUP => println!("WM_SYSKEYUP"),
                     WM_KEYDOWN => println!("WM_KEYDOWN"),
@@ -158,7 +170,7 @@ impl Window {
 
                 SetWindowLongPtrA(window, GWLP_USERDATA, this as _);
 
-                result = DefWindowProcA(window, message, wparam, lparam)
+                result = DefWindowProcA(window, message, wparam, lparam);
             },
             WM_CLOSE | WM_DESTROY => {
                 println!("WM_CLOSE|WN_DESTROY");
@@ -185,7 +197,7 @@ impl Window {
                 EndPaint(window, &paint);
             }
             other => {
-                result = DefWindowProcA(window, other, wparam, lparam)
+                result = DefWindowProcA(window, other, wparam, lparam);
             }
         }
 
