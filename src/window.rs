@@ -17,6 +17,7 @@ use windows::{
 use crate::handle::CheckHandle;
 
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
+pub static mut WINDOW_RUNNING: bool = false;
 
 pub struct Win32OffscreenBuffer {
     // Pixels always are 32-bits wide, Memory Order BB GG RR XX
@@ -48,6 +49,7 @@ impl Win32OffscreenBuffer {
             .expect("Error computing BITMAPINFOHEADER size");
 
         let result = Box::new(buffer);
+        unsafe { WINDOW_RUNNING = true; }
 
         Ok(result)
     }
@@ -150,8 +152,14 @@ impl Window {
     ) -> LRESULT {
         let mut result:LRESULT = windows::Win32::Foundation::LRESULT(0);
         match message {
-            WM_DESTROY => println!("WN_DESTROY"),
-            WM_CLOSE => println!("WM_CLOSE"),
+            WM_DESTROY => {
+                WINDOW_RUNNING = false;
+                println!("WN_DESTROY");
+            },
+            WM_CLOSE => {
+                WINDOW_RUNNING = false;
+                println!("WM_CLOSE");
+            },
             WM_SYSKEYDOWN => println!("Keyboard input came in through a non-dispatch message"),
             WM_SYSKEYUP => println!("Keyboard input came in through a non-dispatch message"),
             WM_KEYDOWN => println!("Keyboard input came in through a non-dispatch message"),
