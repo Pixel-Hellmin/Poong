@@ -17,7 +17,6 @@ use windows::{
 use crate::handle::CheckHandle;
 
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
-pub static mut WINDOW_RUNNING: bool = false;
 
 pub struct Win32OffscreenBuffer {
     // Pixels always are 32-bits wide, Memory Order BB GG RR XX
@@ -49,7 +48,6 @@ impl Win32OffscreenBuffer {
             .expect("Error computing BITMAPINFOHEADER size");
 
         let result = Box::new(buffer);
-        unsafe { WINDOW_RUNNING = true; }
 
         Ok(result)
     }
@@ -57,7 +55,8 @@ impl Win32OffscreenBuffer {
 
 pub struct Window {
     handle: HWND,
-    buffer: Box<Win32OffscreenBuffer>
+    buffer: Box<Win32OffscreenBuffer>,
+    pub window_running: bool
 }
 
 impl Window {
@@ -80,7 +79,8 @@ impl Window {
 
         let mut result = Box::new(Self {
             handle: HWND(0),
-            buffer
+            buffer,
+            window_running: true
         });
 
         let window = unsafe {
@@ -96,7 +96,7 @@ impl Window {
                 HWND(0),
                 HMENU(0),
                 instance,
-                Default::default() // Some(result.as_mut() as *mut _ as _),
+                Some(result.as_mut() as *mut _ as _)
                 )
                 .ok()?
         };
@@ -120,9 +120,6 @@ impl Window {
             while PeekMessageA(&mut message, HWND(0), 0, 0, PM_REMOVE).into()
             {
                 match message.message {
-                    WM_QUIT => {
-                        println!("WM_QUIT");
-                    },
                     WM_MOUSEMOVE => {
                         let (x, y) = get_mouse_position(message.lParam);
                         let point = Vector2 {
@@ -149,22 +146,35 @@ impl Window {
         message: u32,
         wparam: WPARAM,
         lparam: LPARAM,
-    ) -> LRESULT {
+        ) -> LRESULT {
         let mut result:LRESULT = windows::Win32::Foundation::LRESULT(0);
         match message {
-            WM_DESTROY => {
-                WINDOW_RUNNING = false;
-                println!("WN_DESTROY");
+            WM_NCCREATE => {
+                println!("CREATE");
+
+                let cs = lparam.0 as *const CREATESTRUCTW;
+                let this = (*cs).lpCreateParams as *mut Self;
+                (*this).handle = window;
+
+                SetWindowLongPtrA(window, GWLP_USERDATA, this as _);
+
+                result = DefWindowProcA(window, message, wparam, lparam)
             },
-            WM_CLOSE => {
-                WINDOW_RUNNING = false;
-                println!("WM_CLOSE");
+            WM_CLOSE | WM_DESTROY => {
+                println!("WM_CLOSE|WN_DESTROY");
+
+                let this = GetWindowLongPtrA(window, GWLP_USERDATA) as *mut Self;
+                if let Some(this) = this.as_mut() {
+                    this.window_running = false;
+                }
             },
             WM_SYSKEYDOWN => println!("Keyboard input came in through a non-dispatch message"),
             WM_SYSKEYUP => println!("Keyboard input came in through a non-dispatch message"),
             WM_KEYDOWN => println!("Keyboard input came in through a non-dispatch message"),
             WM_KEYUP => println!("Keyboard input came in through a non-dispatch message"),
             WM_PAINT => {
+                println!("WM_PAINT");
+
                 let mut paint: PAINTSTRUCT = Default::default();
                 let device_context = BeginPaint(window, & mut paint);
                 let mut client_rect: RECT = Default::default();
@@ -173,7 +183,6 @@ impl Window {
                 let height = client_rect.bottom - client_rect.top;
                 Self::win32_display_buffer_in_window(device_context, width, height);
                 EndPaint(window, &paint);
-                println!("WM_PAINT")
             }
             other => {
                 result = DefWindowProcA(window, other, wparam, lparam)
