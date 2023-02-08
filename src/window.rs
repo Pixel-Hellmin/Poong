@@ -10,7 +10,8 @@ use windows::{
         UI::WindowsAndMessaging::*,
         Graphics::Gdi::{
             BI_RGB, HDC, BITMAPINFOHEADER, EndPaint, BeginPaint, PAINTSTRUCT,
-            BITMAPINFO, PatBlt, BLACKNESS
+            BITMAPINFO, PatBlt, BLACKNESS, SRCCOPY, DIB_RGB_COLORS,
+            StretchDIBits
         }
     },
 };
@@ -63,7 +64,8 @@ impl Window {
     pub fn new(width: u32, height: u32) -> Result<Box<Self>> {
         println!("Window::new");
 
-        let buffer = Win32OffscreenBuffer::new(width.try_into().unwrap(), height.try_into().unwrap())
+        //let buffer = Win32OffscreenBuffer::new(width.try_into().unwrap(), height.try_into().unwrap())
+        let buffer = Win32OffscreenBuffer::new(300, 200)
             .expect("Error allocating win 32 offscreen buffer");
 
         let instance = unsafe { GetModuleHandleA(None)? };
@@ -106,15 +108,35 @@ impl Window {
     }
 
     pub fn win32_display_buffer_in_window(
+        &mut self,
         device_context: HDC,
         window_width: i32,
         window_height: i32 
     ) {
         println!("win32_display_buffer_in_window");
-        unsafe { PatBlt(device_context, 0, 0, window_width, window_height, BLACKNESS); }
+
+        let offset_x: i32 = 10;
+        let offset_y: i32 = 10;
+
+        unsafe {
+            PatBlt(device_context, 0, 0, window_width, offset_y, BLACKNESS); 
+            PatBlt(device_context, 0, 0, offset_x, window_height, BLACKNESS); 
+            PatBlt(device_context, offset_x + self.buffer.width, 0, window_width, window_height, BLACKNESS); 
+            PatBlt(device_context, 0, offset_y + self.buffer.height, window_width, window_height, BLACKNESS); 
+
+            /*
+            StretchDIBits(device_context,
+                          offset_x, offset_y, self.buffer.width, self.buffer.height,
+                          0, 0, self.buffer.width, self.buffer.height,
+                          self.buffer.memory,
+                          &self.buffer.info,
+                          DIB_RGB_COLORS, SRCCOPY);
+                          */
+
+        }
     }
 
-    pub fn win32_process_pending_messages(&mut self) {
+    pub fn win32_process_pending_messages(&self) {
         let mut message: MSG = Default::default();
         unsafe { 
             while PeekMessageA(&mut message, HWND(0), 0, 0, PM_REMOVE).into()
@@ -159,7 +181,6 @@ impl Window {
         wparam: WPARAM,
         lparam: LPARAM,
         ) -> LRESULT {
-        let mut result:LRESULT = windows::Win32::Foundation::LRESULT(0);
         match message {
             WM_NCCREATE => {
                 println!("CREATE");
@@ -169,8 +190,6 @@ impl Window {
                 (*this).handle = window;
 
                 SetWindowLongPtrA(window, GWLP_USERDATA, this as _);
-
-                result = DefWindowProcA(window, message, wparam, lparam);
             },
             WM_CLOSE | WM_DESTROY => {
                 println!("WM_CLOSE|WN_DESTROY");
@@ -193,15 +212,17 @@ impl Window {
                 GetClientRect(window, & mut client_rect);
                 let width = client_rect.right - client_rect.left;
                 let height = client_rect.bottom - client_rect.top;
-                Self::win32_display_buffer_in_window(device_context, width, height);
+
+                let this = GetWindowLongPtrA(window, GWLP_USERDATA) as *mut Self;
+                if let Some(this) = this.as_mut() {
+                    this.win32_display_buffer_in_window(device_context, width, height);
+                }
+
                 EndPaint(window, &paint);
             }
-            other => {
-                result = DefWindowProcA(window, other, wparam, lparam);
-            }
+            _ => ()
         }
-
-        result
+        DefWindowProcA(window, message, wparam, lparam)
     }
 }
 
