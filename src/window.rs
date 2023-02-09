@@ -16,12 +16,14 @@ use windows::{
     },
 };
 use crate::handle::CheckHandle;
+use bytes::BytesMut;
 
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
 
 pub struct Win32OffscreenBuffer {
     // Pixels always are 32-bits wide, Memory Order BB GG RR XX
     info: BITMAPINFO,
+    bits: BytesMut,
     width: i32,
     height: i32,
     pitch: i32, // pitch is the number of bytes in each row
@@ -32,12 +34,18 @@ impl Win32OffscreenBuffer {
     pub fn new(width: i32, height: i32) -> Result<Box<Self>> {
         println!("Win32OffscreenBuffer::new");
 
+        let bytes_per_pixel:i32 = 4;
+        let bitmap_memory_size: usize = ((width*height)*bytes_per_pixel)
+            .try_into()
+            .unwrap();
+
         let mut buffer = Self {
             info: Default::default(),
+            bits: BytesMut::with_capacity(bitmap_memory_size),
             width,
             height,
-            bytes_per_pixel: 4,
-            pitch: 4 * width,
+            bytes_per_pixel,
+            pitch: bytes_per_pixel * width,
         };
         buffer.info.bmiHeader.biWidth = width;
         buffer.info.bmiHeader.biHeight = -height;  // - sign so origin is top left
@@ -65,7 +73,7 @@ impl Window {
         println!("Window::new");
 
         //let buffer = Win32OffscreenBuffer::new(width.try_into().unwrap(), height.try_into().unwrap())
-        let buffer = Win32OffscreenBuffer::new(300, 200)
+        let buffer = Win32OffscreenBuffer::new(800, 800)
             .expect("Error allocating win 32 offscreen buffer");
 
         let instance = unsafe { GetModuleHandleA(None)? };
@@ -124,14 +132,12 @@ impl Window {
             PatBlt(device_context, offset_x + self.buffer.width, 0, window_width, window_height, BLACKNESS); 
             PatBlt(device_context, 0, offset_y + self.buffer.height, window_width, window_height, BLACKNESS); 
 
-            /*
             StretchDIBits(device_context,
                           offset_x, offset_y, self.buffer.width, self.buffer.height,
                           0, 0, self.buffer.width, self.buffer.height,
-                          self.buffer.memory,
+                          Some(self.buffer.bits.as_mut() as *mut _ as _),
                           &self.buffer.info,
                           DIB_RGB_COLORS, SRCCOPY);
-                          */
 
         }
     }
