@@ -11,12 +11,12 @@ use windows::{
         Graphics::Gdi::{
             BI_RGB, HDC, BITMAPINFOHEADER, EndPaint, BeginPaint, PAINTSTRUCT,
             BITMAPINFO, PatBlt, BLACKNESS, SRCCOPY, DIB_RGB_COLORS,
-            StretchDIBits
+            StretchDIBits, GetDC
         }
     },
 };
 use crate::handle::CheckHandle;
-use bytes::BytesMut;
+use bytes::{ BytesMut, BufMut };
 
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
 
@@ -26,7 +26,6 @@ pub struct Win32OffscreenBuffer {
     bits: BytesMut,
     width: i32,
     height: i32,
-    pitch: i32, // pitch is the number of bytes in each row
     bytes_per_pixel: i32,
 }
 
@@ -45,7 +44,6 @@ impl Win32OffscreenBuffer {
             width,
             height,
             bytes_per_pixel,
-            pitch: bytes_per_pixel * width,
         };
         buffer.info.bmiHeader.biWidth = width;
         buffer.info.bmiHeader.biHeight = -height;  // - sign so origin is top left
@@ -65,7 +63,8 @@ impl Win32OffscreenBuffer {
 pub struct Window {
     handle: HWND,
     buffer: Box<Win32OffscreenBuffer>,
-    pub window_running: bool
+    pub window_running: bool,
+    cursor_coords: Vector2,
 }
 
 impl Window {
@@ -73,7 +72,7 @@ impl Window {
         println!("Window::new");
 
         //let buffer = Win32OffscreenBuffer::new(width.try_into().unwrap(), height.try_into().unwrap())
-        let buffer = Win32OffscreenBuffer::new(800, 800)
+        let buffer = Win32OffscreenBuffer::new(700, 300)
             .expect("Error allocating win 32 offscreen buffer");
 
         let instance = unsafe { GetModuleHandleA(None)? };
@@ -90,7 +89,8 @@ impl Window {
         let mut result = Box::new(Self {
             handle: HWND(0),
             buffer,
-            window_running: true
+            window_running: true,
+            cursor_coords: Vector2 { X: (0.0), Y: (0.0) }
         });
 
         let window = unsafe {
@@ -115,18 +115,29 @@ impl Window {
         Ok(result)
     }
 
-    pub fn win32_display_buffer_in_window(
-        &mut self,
-        device_context: HDC,
-        window_width: i32,
-        window_height: i32 
-    ) {
-        println!("win32_display_buffer_in_window");
-
+    pub fn win32_display_buffer_in_window(&mut self) {
         let offset_x: i32 = 10;
         let offset_y: i32 = 10;
 
+        let pixels_in_buffer: i32 = self.buffer.width * self.buffer.height;
+        let r: i32 = self.cursor_coords.X as i32;
+        let g: i32 = self.cursor_coords.Y as i32;
+        //let b: i32 = self.cursor_coords.X as i32 * 18;
+        let b: i32 = 150;
+
+        for _pixel in 0..pixels_in_buffer {
+            // NOTE(Fermin): Pixel -> BB GG RR AA
+            let color: i32 = (b << 24) | (g << 16) | (r << 8) | 255;
+            self.buffer.bits.put_i32(color);
+        }
+
         unsafe {
+            let device_context = GetDC(self.handle);
+            let mut client_rect: RECT = Default::default();
+            GetClientRect(self.handle, & mut client_rect);
+            let window_width = client_rect.right - client_rect.left;
+            let window_height = client_rect.bottom - client_rect.top;
+
             PatBlt(device_context, 0, 0, window_width, offset_y, BLACKNESS); 
             PatBlt(device_context, 0, 0, offset_x, window_height, BLACKNESS); 
             PatBlt(device_context, offset_x + self.buffer.width, 0, window_width, window_height, BLACKNESS); 
@@ -138,11 +149,12 @@ impl Window {
                           Some(self.buffer.bits.as_mut() as *mut _ as _),
                           &self.buffer.info,
                           DIB_RGB_COLORS, SRCCOPY);
-
         }
+
+        self.buffer.bits.clear();
     }
 
-    pub fn win32_process_pending_messages(&self) {
+    pub fn win32_process_pending_messages(&mut self) {
         let mut message: MSG = Default::default();
         unsafe { 
             while PeekMessageA(&mut message, HWND(0), 0, 0, PM_REMOVE).into()
@@ -154,6 +166,7 @@ impl Window {
                             X: x as f32,
                             Y: y as f32,
                         };
+                        self.cursor_coords = point;
                         println!("WM_MOUSEMOVE, x = {}, y = {}", point.X, point.Y);
                     },
                     WM_LBUTTONDOWN => {
@@ -212,19 +225,21 @@ impl Window {
             WM_PAINT => {
                 println!("WM_PAINT");
 
+                /* NOTE(Fermin): Not sure if this is needed, will leave in case it is
                 let mut paint: PAINTSTRUCT = Default::default();
                 let device_context = BeginPaint(window, & mut paint);
                 let mut client_rect: RECT = Default::default();
                 GetClientRect(window, & mut client_rect);
                 let width = client_rect.right - client_rect.left;
                 let height = client_rect.bottom - client_rect.top;
+                */
 
                 let this = GetWindowLongPtrA(window, GWLP_USERDATA) as *mut Self;
                 if let Some(this) = this.as_mut() {
-                    this.win32_display_buffer_in_window(device_context, width, height);
+                    this.win32_display_buffer_in_window();
                 }
 
-                EndPaint(window, &paint);
+                //EndPaint(window, &paint);
             }
             _ => ()
         }
