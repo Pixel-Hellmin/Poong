@@ -69,7 +69,7 @@ impl Window {
     pub fn new(width: u32, height: u32) -> Result<Box<Self>> {
         println!("Window::new");
 
-        let buffer = Win32OffscreenBuffer::new(200, 200)
+        let buffer = Win32OffscreenBuffer::new(300, 300)
             .expect("Error allocating win 32 offscreen buffer");
 
         let instance = unsafe { GetModuleHandleA(None)? };
