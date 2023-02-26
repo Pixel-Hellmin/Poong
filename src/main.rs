@@ -13,15 +13,23 @@ struct V2 {
     y: i32,
 }
 
+struct GameButtonState {
+    is_down: bool,
+}
 pub struct GameInput {
-    cursor_coords: V2,
+    cursor_pos: V2,
+    mouse_buttons: [GameButtonState; 2],
     dt_for_frame: f32,
 }
 impl Default for GameInput {
     fn default () -> GameInput {
         GameInput {
-            cursor_coords: V2 { x: 0, y: 0 },
+            cursor_pos: V2 { x: 0, y: 0 },
             dt_for_frame: 0.0,
+            mouse_buttons: [
+                GameButtonState { is_down: false },
+                GameButtonState { is_down: false }
+            ],
         }
     }
 }
@@ -81,7 +89,6 @@ fn main() -> Result<()> {
         window.win32_process_pending_messages(&mut input);
         _play_time = (win32_get_wallclock() - start_time) / 10000000;
         //println!("Perf counter: {}", play_time);
-        println!("Cursor x = {}, y = {}", input.cursor_coords.x, input.cursor_coords.y);
     }
     Ok(())
 }

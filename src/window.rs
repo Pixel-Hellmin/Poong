@@ -149,19 +149,23 @@ impl Window {
                 match message.message {
                     WM_MOUSEMOVE => {
                         let (x, y) = Self::get_mouse_position(message.lParam);
-                        input.cursor_coords.x = x.try_into().unwrap();
-                        input.cursor_coords.y = y.try_into().unwrap();
+                        input.cursor_pos.x = x.try_into().unwrap();
+                        input.cursor_pos.y = y.try_into().unwrap();
                     },
                     WM_LBUTTONDOWN => {
+                        input.mouse_buttons[0].is_down = true;
                         println!("WM_LBUTTONDOWN");
                     },
                     WM_LBUTTONUP => {
+                        input.mouse_buttons[0].is_down = false;
                         println!("WM_LBUTTONUP");
                     },
                     WM_RBUTTONDOWN => {
+                        input.mouse_buttons[1].is_down = true;
                         println!("WM_RBUTTONDOWN");
                     },
                     WM_RBUTTONUP => {
+                        input.mouse_buttons[1].is_down = false;
                         println!("WM_RBUTTONUP");
                     },
                     WM_SYSKEYDOWN => println!("WM_SYSKEYDOWN"),
