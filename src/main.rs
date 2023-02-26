@@ -34,7 +34,7 @@ fn main() -> Result<()> {
 
     let start_time: i64 = win32_get_wallclock();
     while window.window_running {
-        render_gradient(&mut *window.buffer);
+        render_gradient(&mut window.buffer);
         window.win32_process_pending_messages();
         play_time = (win32_get_wallclock() - start_time) / 10000000;
         println!("Perf counter: {}", play_time);

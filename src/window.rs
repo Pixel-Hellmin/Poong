@@ -29,7 +29,7 @@ pub struct Win32OffscreenBuffer {
 }
 
 impl Win32OffscreenBuffer {
-    pub fn new(width: i32, height: i32) -> Result<Box<Self>> {
+    pub fn new(width: i32, height: i32) -> Result<Self> {
         println!("Win32OffscreenBuffer::new");
 
         let bytes_per_pixel:i32 = 4;
@@ -52,15 +52,15 @@ impl Win32OffscreenBuffer {
             .try_into()
             .expect("Error computing BITMAPINFOHEADER size");
 
-        let result = Box::new(buffer);
+        //let result = Box::new(buffer);
 
-        Ok(result)
+        Ok(buffer)
     }
 }
 
 pub struct Window {
     handle: HWND,
-    pub buffer: Box<Win32OffscreenBuffer>,
+    pub buffer: Win32OffscreenBuffer,
     pub window_running: bool,
     cursor_coords: Vector2,
 }
