@@ -2,7 +2,6 @@ use std::mem::size_of;
 use windows::{
     core::{Result, PCSTR },
     s,
-    Foundation::Numerics::Vector2,
     Win32::{
         Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM, RECT,
         },
@@ -16,7 +15,8 @@ use windows::{
     },
 };
 use crate::handle::CheckHandle;
-use bytes::{ BytesMut, BufMut };
+use bytes::BytesMut;
+use crate::GameInput;
 
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
 
@@ -62,7 +62,6 @@ pub struct Window {
     handle: HWND,
     pub buffer: Win32OffscreenBuffer,
     pub window_running: bool,
-    cursor_coords: Vector2,
 }
 
 impl Window {
@@ -87,7 +86,6 @@ impl Window {
             handle: HWND(0),
             buffer,
             window_running: true,
-            cursor_coords: Vector2 { X: (0.0), Y: (0.0) }
         });
 
         let _window = unsafe {
@@ -119,8 +117,8 @@ impl Window {
     }
 
     fn win32_display_buffer_in_window(&mut self, device_context: HDC) {
-        let offset_x: i32 = self.cursor_coords.X as i32 - self.buffer.width/2;
-        let offset_y: i32 = self.cursor_coords.Y as i32 - self.buffer.height/2;
+        let offset_x: i32 = 10;
+        let offset_y: i32 = 10;
 
         unsafe {
             let mut client_rect: RECT = Default::default();
@@ -143,7 +141,7 @@ impl Window {
     }
 
 
-    pub fn win32_process_pending_messages(&mut self) {
+    pub fn win32_process_pending_messages(&mut self, input: &mut GameInput) {
         let mut message: MSG = Default::default();
         unsafe { 
             while PeekMessageA(&mut message, HWND(0), 0, 0, PM_REMOVE).into()
@@ -151,12 +149,8 @@ impl Window {
                 match message.message {
                     WM_MOUSEMOVE => {
                         let (x, y) = Self::get_mouse_position(message.lParam);
-                        let point = Vector2 {
-                            X: x as f32,
-                            Y: y as f32,
-                        };
-                        self.cursor_coords = point;
-                        println!("WM_MOUSEMOVE, x = {}, y = {}", point.X, point.Y);
+                        input.cursor_coords.x = x.try_into().unwrap();
+                        input.cursor_coords.y = y.try_into().unwrap();
                     },
                     WM_LBUTTONDOWN => {
                         println!("WM_LBUTTONDOWN");

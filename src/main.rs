@@ -13,7 +13,7 @@ struct V2 {
     y: i32,
 }
 
-struct GameInput {
+pub struct GameInput {
     cursor_coords: V2,
     dt_for_frame: f32,
 }
@@ -78,9 +78,10 @@ fn main() -> Result<()> {
     let start_time: i64 = win32_get_wallclock();
     while window.window_running {
         render_gradient(&mut window.buffer);
-        window.win32_process_pending_messages();
+        window.win32_process_pending_messages(&mut input);
         _play_time = (win32_get_wallclock() - start_time) / 10000000;
         //println!("Perf counter: {}", play_time);
+        println!("Cursor x = {}, y = {}", input.cursor_coords.x, input.cursor_coords.y);
     }
     Ok(())
 }
