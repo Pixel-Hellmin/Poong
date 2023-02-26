@@ -23,9 +23,9 @@ const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
 pub struct Win32OffscreenBuffer {
     // Pixels always are 32-bits wide, Memory Order BB GG RR XX
     info: BITMAPINFO,
-    bits: BytesMut,
-    width: i32,
-    height: i32,
+    pub bits: BytesMut,
+    pub width: i32,
+    pub height: i32,
 }
 
 impl Win32OffscreenBuffer {
@@ -60,7 +60,7 @@ impl Win32OffscreenBuffer {
 
 pub struct Window {
     handle: HWND,
-    buffer: Box<Win32OffscreenBuffer>,
+    pub buffer: Box<Win32OffscreenBuffer>,
     pub window_running: bool,
     cursor_coords: Vector2,
 }
@@ -110,20 +110,6 @@ impl Window {
         // unsafe { ShowWindow(window, SW_SHOW) };
         
         Ok(result)
-    }
-
-    fn render_gradient(&mut self) {
-        let r: i32 = self.cursor_coords.X as i32;
-        let g: i32 = self.cursor_coords.Y as i32;
-        let b: i32 = 150;
-        let pixels_in_buffer: i32 = self.buffer.width * self.buffer.height;
-
-        self.buffer.bits.clear();
-        for _ in 0..pixels_in_buffer {
-            // NOTE(Fermin): Pixel -> BB GG RR AA
-            let color: i32 = (b << 24) | (g << 16) | (r << 8) | 255;
-            self.buffer.bits.put_i32(color);
-        }
     }
 
     fn get_mouse_position(lparam: LPARAM) -> (isize, isize) {
@@ -195,7 +181,6 @@ impl Window {
                 }
             }
 
-            self.render_gradient();
             self.win32_display_buffer_in_window(GetDC(self.handle));
         }
     }
