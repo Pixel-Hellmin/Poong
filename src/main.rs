@@ -40,7 +40,7 @@ fn win32_get_wallclock() -> i64 {
     return result
 }
 
-fn render_gradient(buffer: &mut Win32OffscreenBuffer) {
+fn render_gradient(buffer: &mut Win32OffscreenBuffer, input: &GameInput) {
     static mut WAVE: f32 = 0.001;
     static mut WAVE_DELTA: f32 = 0.001;
 
@@ -52,13 +52,23 @@ fn render_gradient(buffer: &mut Win32OffscreenBuffer) {
     let pixels_in_buffer: i32 = buffer.width * buffer.height;
     for pixel in 0..pixels_in_buffer {
 
-        let gradient_in_x: f32 = ((pixel % buffer.width) as f32 / buffer.width as f32) * 255.0;
-        let gradient_in_y: f32 = ((pixel / buffer.height) as f32 / buffer.height as f32) * 255.0;
+        let gradient_in_x: f32 = if input.mouse_buttons[0].is_down {
+            0.0
+        } else {
+            ((pixel % buffer.width) as f32 / buffer.width as f32) * 255.0
+        };
+
+        let gradient_in_y: f32 = if input.mouse_buttons[1].is_down {
+            0.0
+        } else {
+            ((pixel / buffer.height) as f32 / buffer.height as f32) * 255.0
+        };
         
         unsafe {
             r = (255.0 * WAVE + gradient_in_x + gradient_in_y) as i32;
             g = (255.0 - 255.0 * WAVE + gradient_in_y) as i32;
-            b = (75.0 + 75.0 * WAVE + gradient_in_y - gradient_in_x) as i32;
+            //b = (75.0 + 75.0 * WAVE + gradient_in_y - gradient_in_x) as i32;
+            b = 100;
         }
 
         // NOTE(Fermin): Pixel -> BB GG RR AA
@@ -85,7 +95,7 @@ fn main() -> Result<()> {
 
     let start_time: i64 = win32_get_wallclock();
     while window.window_running {
-        render_gradient(&mut window.buffer);
+        render_gradient(&mut window.buffer, &input);
         window.win32_process_pending_messages(&mut input);
         _play_time = (win32_get_wallclock() - start_time) / 10000000;
         //println!("Perf counter: {}", play_time);
