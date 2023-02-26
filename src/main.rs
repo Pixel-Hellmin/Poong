@@ -8,6 +8,24 @@ mod window;
 use windows::core::Result;
 use window::Window;
 
+struct V2 {
+    x: i32,
+    y: i32,
+}
+
+struct GameInput {
+    cursor_coords: V2,
+    dt_for_frame: f32,
+}
+impl Default for GameInput {
+    fn default () -> GameInput {
+        GameInput {
+            cursor_coords: V2 { x: 0, y: 0 },
+            dt_for_frame: 0.0,
+        }
+    }
+}
+
 fn win32_get_wallclock() -> i64 {
     let mut result: i64 = 0;
     unsafe {QueryPerformanceCounter(&mut result);}
@@ -54,14 +72,15 @@ fn render_gradient(buffer: &mut Win32OffscreenBuffer) {
 
 fn main() -> Result<()> {
     let mut window = Window::new(1000, 700)?;
-    let mut play_time: i64;
+    let mut input = GameInput::default();
+    let mut _play_time: i64;
 
     let start_time: i64 = win32_get_wallclock();
     while window.window_running {
         render_gradient(&mut window.buffer);
         window.win32_process_pending_messages();
-        play_time = (win32_get_wallclock() - start_time) / 10000000;
-        println!("Perf counter: {}", play_time);
+        _play_time = (win32_get_wallclock() - start_time) / 10000000;
+        //println!("Perf counter: {}", play_time);
     }
     Ok(())
 }
