@@ -17,12 +17,13 @@ struct GameButtonState {
     is_down: bool,
 }
 pub struct GameInput {
+    // TODO(Fermin): Controller\Keyboard support
     cursor_pos: V2,
-    mouse_buttons: [GameButtonState; 2],
     dt_for_frame: f32,
+    mouse_buttons: [GameButtonState; 2],
 }
-impl Default for GameInput {
-    fn default () -> GameInput {
+impl GameInput {
+    fn new () -> GameInput {
         GameInput {
             cursor_pos: V2 { x: 0, y: 0 },
             dt_for_frame: 0.0,
@@ -67,8 +68,7 @@ fn render_gradient(buffer: &mut Win32OffscreenBuffer, input: &GameInput) {
         unsafe {
             r = (255.0 * WAVE + gradient_in_x + gradient_in_y) as i32;
             g = (255.0 - 255.0 * WAVE + gradient_in_y) as i32;
-            //b = (75.0 + 75.0 * WAVE + gradient_in_y - gradient_in_x) as i32;
-            b = 100;
+            b = (75.0 + 75.0 * WAVE + gradient_in_y - gradient_in_x) as i32;
         }
 
         // NOTE(Fermin): Pixel -> BB GG RR AA
@@ -85,12 +85,11 @@ fn render_gradient(buffer: &mut Win32OffscreenBuffer, input: &GameInput) {
         }
         WAVE += WAVE_DELTA;
     }
-    
 }
 
 fn main() -> Result<()> {
     let mut window = Window::new(1000, 700)?;
-    let mut input = GameInput::default();
+    let mut input = GameInput::new();
     let mut _play_time: i64;
 
     let start_time: i64 = win32_get_wallclock();
