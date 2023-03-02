@@ -1,12 +1,11 @@
-use std::mem::size_of;
 use windows::{
-    core::{Result, PCSTR },
     s,
+    core::{Result, PCSTR },
     Win32::{
-        Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM, RECT,
-        },
+        Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM, RECT,},
         System::LibraryLoader::GetModuleHandleA,
         UI::WindowsAndMessaging::*,
+        UI::Input::KeyboardAndMouse::*,
         Graphics::Gdi::{
             BI_RGB, HDC, BITMAPINFOHEADER, EndPaint, BeginPaint, PAINTSTRUCT,
             BITMAPINFO, PatBlt, BLACKNESS, SRCCOPY, DIB_RGB_COLORS,
@@ -14,9 +13,10 @@ use windows::{
         }
     },
 };
-use crate::handle::CheckHandle;
 use bytes::BytesMut;
-use crate::GameInput;
+use std::mem::size_of;
+use crate::handle::*;
+use crate::*;
 
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
 
@@ -103,7 +103,7 @@ impl Window {
                 instance,
                 Some(result.as_mut() as *mut _ as _)
                 )
-                .ok()?
+                .ok()? //NOTE(Fermin): Consider removing this trait
         };
         // unsafe { ShowWindow(window, SW_SHOW) };
         
@@ -140,6 +140,13 @@ impl Window {
         }
     }
 
+    fn win32_process_keyboard_message(new_state: &mut GameButtonState, is_down: bool) {
+        if new_state.ended_down != is_down
+        {
+           new_state.ended_down = is_down;
+           //TODO(Fermin): Half transitions logic
+        }
+    }
 
     pub fn win32_process_pending_messages(&mut self, input: &mut GameInput) {
         let mut message: MSG = Default::default();
@@ -153,25 +160,79 @@ impl Window {
                         input.cursor_pos.y = y.try_into().unwrap();
                     },
                     WM_LBUTTONDOWN => {
-                        input.mouse_buttons[0].is_down = true;
+                        input.mouse_buttons[0].ended_down = true;
                         println!("WM_LBUTTONDOWN");
                     },
                     WM_LBUTTONUP => {
-                        input.mouse_buttons[0].is_down = false;
+                        input.mouse_buttons[0].ended_down = false;
                         println!("WM_LBUTTONUP");
                     },
                     WM_RBUTTONDOWN => {
-                        input.mouse_buttons[1].is_down = true;
+                        input.mouse_buttons[1].ended_down = true;
                         println!("WM_RBUTTONDOWN");
                     },
                     WM_RBUTTONUP => {
-                        input.mouse_buttons[1].is_down = false;
+                        input.mouse_buttons[1].ended_down = false;
                         println!("WM_RBUTTONUP");
                     },
-                    WM_SYSKEYDOWN => println!("WM_SYSKEYDOWN"),
-                    WM_SYSKEYUP => println!("WM_SYSKEYUP"),
-                    WM_KEYDOWN => println!("WM_KEYDOWN"),
-                    WM_KEYUP => println!("WM_KEYUP"),
+                    WM_SYSKEYDOWN |
+                    WM_SYSKEYUP |
+                    WM_KEYDOWN |
+                    WM_KEYUP => {
+                        let v_k_code: char = char::from_u32(message.wParam.0 as u32)
+                            .expect("Failed to parse VKCode");
+
+                        let was_down = message.lParam.0 & (1 << 30) != 0;
+                        let is_down = (message.lParam.0 & (1 << 31)) == 0;
+                        let alt_key_was_down = message.lParam.0 & (1 << 29) != 0;
+                        //println!("key: {} was_down: {}", v_k_code, was_down);
+                        //println!("key: {} is_down: {}", v_k_code, is_down);
+                        
+                        if was_down != is_down {
+                            if v_k_code == 'W'
+                            {
+                                println!("W");
+                                Self::win32_process_keyboard_message(&mut input.keyboard.buttons.move_up, is_down);
+                            }
+                            else if v_k_code == 'A'
+                            {
+                                println!("A");
+                                Self::win32_process_keyboard_message(&mut input.keyboard.buttons.move_left, is_down);
+                            }
+                            else if v_k_code == 'S'
+                            {
+                                println!("S");
+                                Self::win32_process_keyboard_message(&mut input.keyboard.buttons.move_down, is_down);
+                            }
+                            else if v_k_code == 'D'
+                            {
+                                println!("D");
+                                Self::win32_process_keyboard_message(&mut input.keyboard.buttons.move_right, is_down);
+                            }
+                            else if v_k_code as u16 == VK_ESCAPE.0
+                            {
+                                println!("Escape");
+                                Self::win32_process_keyboard_message(&mut input.keyboard.buttons.back, is_down);
+                            }
+                            else if v_k_code as u16 == VK_RETURN.0
+                            {
+                                println!("Return");
+                                Self::win32_process_keyboard_message(&mut input.keyboard.buttons.start, is_down);
+                            }
+                            else if v_k_code as u16 == VK_SPACE.0
+                            {
+                                println!("Space");
+                                Self::win32_process_keyboard_message(&mut input.keyboard.buttons.jump, is_down);
+                            }
+
+                            if is_down {
+                                if(v_k_code as u16 == VK_F4.0) && alt_key_was_down {
+                                    println!("Alt+F4");
+                                    self.window_running = false;
+                                }
+                            }
+                        }
+                    },
                     _ => {
                         TranslateMessage(&message);
                         DispatchMessageA(&message);

@@ -23,4 +23,5 @@ features = [
     "Win32_System_WinRT_Composition",
     "Win32_UI_WindowsAndMessaging",
     "Win32_System_Performance",
+    "Win32_UI_Input_KeyboardAndMouse"
 ]

@@ -1,12 +1,11 @@
 use windows::Win32::System::Performance::QueryPerformanceCounter;
+use windows::core::Result;
 use bytes::BufMut;
+use crate::window::*;
 
-use crate::window::Win32OffscreenBuffer;
 mod handle;
 mod window;
 
-use windows::core::Result;
-use window::Window;
 
 struct V2 {
     x: i32,
@@ -14,22 +13,54 @@ struct V2 {
 }
 
 struct GameButtonState {
-    is_down: bool,
+    // TODO(Fermin): Half transitions
+    ended_down: bool,
+}
+struct InputButtons {
+    move_up: GameButtonState,
+    move_down: GameButtonState,
+    move_left: GameButtonState,
+    move_right: GameButtonState,
+    back: GameButtonState,
+    start: GameButtonState,
+    jump: GameButtonState,
+}
+struct KeyboardInput {
+    is_connected: bool,
+    buttons: InputButtons
+}
+impl KeyboardInput {
+    fn new () -> Self {
+        Self {
+            is_connected: false,
+            buttons: InputButtons {
+                move_up: GameButtonState { ended_down: false },
+                move_down: GameButtonState { ended_down: false },
+                move_left: GameButtonState { ended_down: false },
+                move_right: GameButtonState { ended_down: false },
+                back: GameButtonState { ended_down: false },
+                start: GameButtonState { ended_down: false },
+                jump: GameButtonState { ended_down: false },
+            }
+        }
+    }
 }
 pub struct GameInput {
     // TODO(Fermin): Controller\Keyboard support
     cursor_pos: V2,
     dt_for_frame: f32,
+    keyboard: KeyboardInput,
     mouse_buttons: [GameButtonState; 2],
 }
 impl GameInput {
-    fn new () -> GameInput {
-        GameInput {
+    fn new () -> Self {
+        Self {
             cursor_pos: V2 { x: 0, y: 0 },
             dt_for_frame: 0.0,
+            keyboard: KeyboardInput::new(),
             mouse_buttons: [
-                GameButtonState { is_down: false },
-                GameButtonState { is_down: false }
+                GameButtonState { ended_down: false },
+                GameButtonState { ended_down: false }
             ],
         }
     }
@@ -53,13 +84,13 @@ fn render_gradient(buffer: &mut Win32OffscreenBuffer, input: &GameInput) {
     let pixels_in_buffer: i32 = buffer.width * buffer.height;
     for pixel in 0..pixels_in_buffer {
 
-        let gradient_in_x: f32 = if input.mouse_buttons[0].is_down {
+        let gradient_in_x: f32 = if input.mouse_buttons[0].ended_down {
             0.0
         } else {
             ((pixel % buffer.width) as f32 / buffer.width as f32) * 255.0
         };
 
-        let gradient_in_y: f32 = if input.mouse_buttons[1].is_down {
+        let gradient_in_y: f32 = if input.mouse_buttons[1].ended_down {
             0.0
         } else {
             ((pixel / buffer.height) as f32 / buffer.height as f32) * 255.0
