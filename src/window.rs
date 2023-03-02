@@ -159,6 +159,8 @@ impl Window {
                         input.cursor_pos.x = x.try_into().unwrap();
                         input.cursor_pos.y = y.try_into().unwrap();
                     },
+                    // NOTE(Fermin): Consider following the same logic for 
+                    // mouse button than keyboard buttons
                     WM_LBUTTONDOWN => {
                         input.mouse_buttons[0].ended_down = true;
                         println!("WM_LBUTTONDOWN");

@@ -27,7 +27,7 @@ struct InputButtons {
 }
 struct KeyboardInput {
     is_connected: bool,
-    buttons: InputButtons
+    buttons: InputButtons,
 }
 impl KeyboardInput {
     fn new () -> Self {
@@ -45,6 +45,7 @@ impl KeyboardInput {
         }
     }
 }
+
 pub struct GameInput {
     // TODO(Fermin): Controller\Keyboard support
     cursor_pos: V2,
@@ -86,12 +87,26 @@ fn render_gradient(buffer: &mut Win32OffscreenBuffer, input: &GameInput) {
 
         let gradient_in_x: f32 = if input.mouse_buttons[0].ended_down {
             0.0
+        } else if input.keyboard.buttons.move_up.ended_down {
+            50.0
+        } else if input.keyboard.buttons.move_down.ended_down {
+            100.0
+        } else if input.keyboard.buttons.move_left.ended_down {
+            150.0
+        } else if input.keyboard.buttons.move_right.ended_down {
+            200.0
         } else {
             ((pixel % buffer.width) as f32 / buffer.width as f32) * 255.0
         };
 
         let gradient_in_y: f32 = if input.mouse_buttons[1].ended_down {
             0.0
+        } else if input.keyboard.buttons.start.ended_down {
+            50.0
+        } else if input.keyboard.buttons.back.ended_down {
+            100.0
+        } else if input.keyboard.buttons.jump.ended_down {
+            150.0
         } else {
             ((pixel / buffer.height) as f32 / buffer.height as f32) * 255.0
         };
