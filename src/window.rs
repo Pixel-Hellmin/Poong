@@ -19,6 +19,9 @@ use crate::handle::*;
 use crate::*;
 
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
+const DISPLAY_OFFSET_X: i32 = 10;
+const DISPLAY_OFFSET_Y: i32 = 10;
+
 
 pub struct Win32OffscreenBuffer {
     // Pixels always are 32-bits wide, Memory Order BB GG RR XX
@@ -117,22 +120,19 @@ impl Window {
     }
 
     fn win32_display_buffer_in_window(&mut self, device_context: HDC) {
-        let offset_x: i32 = 10;
-        let offset_y: i32 = 10;
-
         unsafe {
             let mut client_rect: RECT = Default::default();
             GetClientRect(self.handle, & mut client_rect);
             let window_width = client_rect.right - client_rect.left;
             let window_height = client_rect.bottom - client_rect.top;
 
-            PatBlt(device_context, 0, 0, window_width, offset_y, BLACKNESS); 
-            PatBlt(device_context, 0, 0, offset_x, window_height, BLACKNESS); 
-            PatBlt(device_context, offset_x + self.buffer.width, 0, window_width, window_height, BLACKNESS); 
-            PatBlt(device_context, 0, offset_y + self.buffer.height, window_width, window_height, BLACKNESS); 
+            PatBlt(device_context, 0, 0, window_width, DISPLAY_OFFSET_Y, BLACKNESS); 
+            PatBlt(device_context, 0, 0, DISPLAY_OFFSET_X, window_height, BLACKNESS); 
+            PatBlt(device_context, DISPLAY_OFFSET_X + self.buffer.width, 0, window_width, window_height, BLACKNESS); 
+            PatBlt(device_context, 0, DISPLAY_OFFSET_Y + self.buffer.height, window_width, window_height, BLACKNESS); 
 
             StretchDIBits(device_context,
-                          offset_x, offset_y, self.buffer.width, self.buffer.height,
+                          DISPLAY_OFFSET_X, DISPLAY_OFFSET_Y, self.buffer.width, self.buffer.height,
                           0, 0, self.buffer.width, self.buffer.height,
                           Some(self.buffer.bits.as_mut() as *mut _ as _),
                           &self.buffer.info,
@@ -156,8 +156,9 @@ impl Window {
                 match message.message {
                     WM_MOUSEMOVE => {
                         let (x, y) = Self::get_mouse_position(message.lParam);
-                        input.cursor_pos.x = x.try_into().unwrap();
-                        input.cursor_pos.y = y.try_into().unwrap();
+                        input.cursor_pos.x = x as i32 - DISPLAY_OFFSET_X;
+                        input.cursor_pos.y = y as i32 - DISPLAY_OFFSET_Y;
+                        println!("cursor x: {}, y: {}", input.cursor_pos.x, input.cursor_pos.y);
                     },
                     // NOTE(Fermin): Consider following the same logic for 
                     // mouse button than keyboard buttons

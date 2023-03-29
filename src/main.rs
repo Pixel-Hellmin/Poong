@@ -2,6 +2,7 @@ use windows::Win32::System::Performance::QueryPerformanceCounter;
 use windows::core::Result;
 use bytes::BufMut;
 use crate::window::*;
+use crate::game::*;
 
 mod handle;
 mod window;
@@ -78,11 +79,12 @@ fn main() -> Result<()> {
     let mut window = Window::new(1000, 700)?;
     let mut input = GameInput::new();
     let mut _play_time: i64;
+    let mut game_memory = GameMemory::new();
 
     let start_time: i64 = win32_get_wallclock();
     while window.window_running {
         // NOTE(Fermin): This should be game update and render
-        game::update_and_render(&mut window.buffer, &input);
+        update_and_render(&mut game_memory, &mut window.buffer, &input);
         window.win32_process_pending_messages(&mut input);
         _play_time = (win32_get_wallclock() - start_time) / 10000000;
         //println!("Perf counter: {}", play_time);
