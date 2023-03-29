@@ -158,7 +158,7 @@ impl Window {
                         let (x, y) = Self::get_mouse_position(message.lParam);
                         input.cursor_pos.x = x as i32 - DISPLAY_OFFSET_X;
                         input.cursor_pos.y = y as i32 - DISPLAY_OFFSET_Y;
-                        println!("cursor x: {}, y: {}", input.cursor_pos.x, input.cursor_pos.y);
+                        //println!("cursor x: {}, y: {}", input.cursor_pos.x, input.cursor_pos.y);
                     },
                     // NOTE(Fermin): Consider following the same logic for 
                     // mouse button than keyboard buttons

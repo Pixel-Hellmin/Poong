@@ -30,20 +30,20 @@ impl Color {
     }
 }
 
-fn draw_square(pos: &V2, side_length: i32, buffer: &mut Win32OffscreenBuffer, color: &Color) {
+fn draw_rectangle(pos: &V2, width: i32, height: i32, buffer: &mut Win32OffscreenBuffer, color: &Color) {
     let start_x: i32;
     let start_y: i32;
 
-    if pos.x + side_length > buffer.width {
-        start_x = buffer.width - side_length;
+    if pos.x + width > buffer.width {
+        start_x = buffer.width - width;
     } else if pos.x < 0 {
         start_x = 0;
     } else {
         start_x = pos.x;
     }
 
-    if pos.y + side_length > buffer.height {
-        start_y = buffer.height - side_length;
+    if pos.y + height > buffer.height {
+        start_y = buffer.height - height;
     } else if pos.y < 0 {
         start_y = 0;
     } else {
@@ -51,8 +51,8 @@ fn draw_square(pos: &V2, side_length: i32, buffer: &mut Win32OffscreenBuffer, co
     }
 
     let mut row: usize = (start_x * BYTES_PER_PIXEL + start_y * buffer.width * BYTES_PER_PIXEL) as usize;
-    for _y in 0..side_length {
-        for x in 0..side_length {
+    for _y in 0..height {
+        for x in 0..width {
             // NOTE(Fermin): Pixel -> BB GG RR AA
             buffer.bits[row + (x * BYTES_PER_PIXEL) as usize] = color.b as u8;
             buffer.bits[row + (x * BYTES_PER_PIXEL + 1) as usize] = color.g as u8;
@@ -65,7 +65,8 @@ fn draw_square(pos: &V2, side_length: i32, buffer: &mut Win32OffscreenBuffer, co
 
 pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuffer, input: &GameInput) {
     let color = Color::new(50, 168, 82, 255);
-    let square_side_length: i32 = 50;
+    let rect_width: i32 = 75;
+    let rect_height: i32 = 50;
 
     buffer.bits.clear();
     // NOTE(FErmin): Clear to white
@@ -76,11 +77,11 @@ pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuf
     }
 
     if !memory.is_initialized {
-        draw_square(&V2{x:150, y:150}, square_side_length, buffer, &color);
+        draw_rectangle(&V2{x:buffer.width/2, y:buffer.height/2}, rect_width, rect_height, buffer, &color);
         memory.is_initialized = true;
     }
 
-    draw_square(&input.cursor_pos, square_side_length, buffer, &color);
+    draw_rectangle(&input.cursor_pos, rect_width, rect_height, buffer, &color);
     /*
        static mut WAVE: f32 = 0.001;
        static mut WAVE_DELTA: f32 = 0.001;
