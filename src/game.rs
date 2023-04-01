@@ -3,15 +3,19 @@ use crate::*;
 
 const WHITE: Color = Color{r: 255, g: 255, b: 255, a: 255};
 const BYTES_PER_PIXEL: i32 = 4;
+const ENTITY_Y_PADDING: i32 = 10;
+const ENTITY_X_PADDING: i32 = 10;
+const PLAYER_WIDTH: i32 = 25;
+const PLAYER_HEIGHT: i32 = 50;
 
 
 pub struct GameMemory {
-    is_initialized: bool,
+    v_entity: Entity,
 }
 impl GameMemory {
     pub fn new () -> Self {
         Self {
-            is_initialized: false,
+            v_entity: Entity::new(),
         }
     }
 }
@@ -30,7 +34,26 @@ impl Color {
     }
 }
 
-fn draw_rectangle(pos: &V2, width: i32, height: i32, buffer: &mut Win32OffscreenBuffer, color: &Color) {
+struct Entity {
+    p: V2,
+    dp: V2,
+    color: Color,
+    width: i32,
+    height: i32,
+}
+impl Entity {
+    fn new() -> Self {
+        Self {
+            p: V2{ x: ENTITY_X_PADDING, y: ENTITY_Y_PADDING },
+            dp: V2{ x: 0, y: 0 },
+            color: Color::new(120, 168, 82, 255),
+            width: PLAYER_WIDTH,
+            height: PLAYER_HEIGHT,
+        }
+    }
+}
+
+fn draw_rectangle(pos: &V2, width: i32, height: i32, color: &Color, buffer: &mut Win32OffscreenBuffer) {
     let start_x: i32;
     let start_y: i32;
 
@@ -64,24 +87,35 @@ fn draw_rectangle(pos: &V2, width: i32, height: i32, buffer: &mut Win32Offscreen
 }
 
 pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuffer, input: &GameInput) {
-    let color = Color::new(50, 168, 82, 255);
-    let rect_width: i32 = 75;
-    let rect_height: i32 = 50;
-
     buffer.bits.clear();
     // NOTE(FErmin): Clear to white
+    // This is shit for performance, try to rerender only necessary pixels.
     for _y in 0..buffer.height {
         for _x in 0..buffer.width {
             buffer.bits.put_i32(WHITE.get_i32());
         }
     }
 
-    if !memory.is_initialized {
-        draw_rectangle(&V2{x:buffer.width/2, y:buffer.height/2}, rect_width, rect_height, buffer, &color);
-        memory.is_initialized = true;
+    // TODO(Fermin): Use newtons eq of motion for better movement feeling
+    if input.keyboard.buttons.move_up.ended_down {
+        if memory.v_entity.p.y > ENTITY_Y_PADDING {
+            memory.v_entity.p.y -= 1;
+        }
+    }
+    if input.keyboard.buttons.move_down.ended_down {
+        if memory.v_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.v_entity.height {
+            memory.v_entity.p.y += 1;
+        }
     }
 
-    draw_rectangle(&input.cursor_pos, rect_width, rect_height, buffer, &color);
+    draw_rectangle(
+        &memory.v_entity.p,
+        memory.v_entity.width,
+        memory.v_entity.height,
+        &memory.v_entity.color,
+        buffer
+    );
+
     /*
        static mut WAVE: f32 = 0.001;
        static mut WAVE_DELTA: f32 = 0.001;
@@ -142,4 +176,3 @@ pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuf
     }
     */
 }
-

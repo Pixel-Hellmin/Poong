@@ -1,3 +1,4 @@
+use bytes::BytesMut;
 use windows::Win32::System::Performance::QueryPerformanceCounter;
 use windows::core::Result;
 use bytes::BufMut;
@@ -83,7 +84,6 @@ fn main() -> Result<()> {
 
     let start_time: i64 = win32_get_wallclock();
     while window.window_running {
-        // NOTE(Fermin): This should be game update and render
         update_and_render(&mut game_memory, &mut window.buffer, &input);
         window.win32_process_pending_messages(&mut input);
         _play_time = (win32_get_wallclock() - start_time) / 10000000;
