@@ -5,17 +5,19 @@ const WHITE: Color = Color{r: 255, g: 255, b: 255, a: 255};
 const BYTES_PER_PIXEL: i32 = 4;
 const ENTITY_Y_PADDING: i32 = 10;
 const ENTITY_X_PADDING: i32 = 10;
-const PLAYER_WIDTH: i32 = 25;
-const PLAYER_HEIGHT: i32 = 50;
-
+const TILE_SIZE: i32 = 25;
 
 pub struct GameMemory {
     v_entity: Entity,
+    h_entity: Entity,
+    is_initialized: bool,
 }
 impl GameMemory {
     pub fn new () -> Self {
         Self {
-            v_entity: Entity::new(),
+            v_entity: Entity::new(TILE_SIZE, TILE_SIZE*2),
+            h_entity: Entity::new(TILE_SIZE*2, TILE_SIZE),
+            is_initialized: false,
         }
     }
 }
@@ -42,13 +44,13 @@ struct Entity {
     height: i32,
 }
 impl Entity {
-    fn new() -> Self {
+    fn new(width: i32, height: i32) -> Self {
         Self {
-            p: V2{ x: ENTITY_X_PADDING, y: ENTITY_Y_PADDING },
+            p: V2{ x: 0, y: 0 },
             dp: V2{ x: 0, y: 0 },
             color: Color::new(120, 168, 82, 255),
-            width: PLAYER_WIDTH,
-            height: PLAYER_HEIGHT,
+            width,
+            height,
         }
     }
 }
@@ -96,6 +98,14 @@ pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuf
         }
     }
 
+    if !memory.is_initialized {
+        memory.v_entity.p.x = ENTITY_X_PADDING;
+        memory.v_entity.p.y = ENTITY_Y_PADDING;
+        memory.h_entity.p.x = ENTITY_X_PADDING;
+        memory.h_entity.p.y = buffer.height - ENTITY_Y_PADDING - memory.h_entity.height;
+        memory.is_initialized = true;
+    }
+
     // TODO(Fermin): Use newtons eq of motion for better movement feeling
     if input.keyboard.buttons.move_up.ended_down {
         if memory.v_entity.p.y > ENTITY_Y_PADDING {
@@ -107,12 +117,29 @@ pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuf
             memory.v_entity.p.y += 1;
         }
     }
+    if input.keyboard.buttons.move_left.ended_down {
+        if memory.h_entity.p.x > ENTITY_X_PADDING {
+            memory.h_entity.p.x -= 1;
+        }
+    }
+    if input.keyboard.buttons.move_right.ended_down {
+        if memory.h_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.h_entity.width {
+            memory.h_entity.p.x += 1;
+        }
+    }
 
     draw_rectangle(
         &memory.v_entity.p,
         memory.v_entity.width,
         memory.v_entity.height,
         &memory.v_entity.color,
+        buffer
+    );
+    draw_rectangle(
+        &memory.h_entity.p,
+        memory.h_entity.width,
+        memory.h_entity.height,
+        &memory.h_entity.color,
         buffer
     );
 
