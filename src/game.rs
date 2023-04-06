@@ -8,16 +8,20 @@ const ENTITY_X_PADDING: i32 = 10;
 const TILE_SIZE: i32 = 25;
 
 pub struct GameMemory {
-    v_entity: Entity,
-    h_entity: Entity,
+    l_entity: Entity,
+    r_entity: Entity,
+    b_entity: Entity,
+    t_entity: Entity,
     ball: Entity,
     is_initialized: bool,
 }
 impl GameMemory {
     pub fn new () -> Self {
         Self {
-            v_entity: Entity::new(TILE_SIZE, TILE_SIZE*2, Color::new(120, 130, 170, 255)),
-            h_entity: Entity::new(TILE_SIZE*2, TILE_SIZE, Color::new(120, 130, 170, 255)),
+            l_entity: Entity::new(TILE_SIZE, TILE_SIZE*2, Color::new(120, 130, 170, 255)),
+            r_entity: Entity::new(TILE_SIZE, TILE_SIZE*2, Color::new(120, 130, 170, 255)),
+            b_entity: Entity::new(TILE_SIZE*2, TILE_SIZE, Color::new(120, 130, 170, 255)),
+            t_entity: Entity::new(TILE_SIZE*2, TILE_SIZE, Color::new(120, 130, 170, 255)),
             ball: Entity::new(TILE_SIZE, TILE_SIZE, Color::new(220, 30, 70, 255)),
             is_initialized: false,
         }
@@ -101,49 +105,84 @@ pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuf
     }
 
     if !memory.is_initialized {
-        memory.v_entity.p.x = ENTITY_X_PADDING;
-        memory.v_entity.p.y = ENTITY_Y_PADDING;
-        memory.h_entity.p.x = ENTITY_X_PADDING;
-        memory.h_entity.p.y = buffer.height - ENTITY_Y_PADDING - memory.h_entity.height;
+        memory.l_entity.p.x = ENTITY_X_PADDING;
+        memory.l_entity.p.y = ENTITY_Y_PADDING;
+
+        memory.r_entity.p.x = buffer.width - ENTITY_X_PADDING - memory.r_entity.width;
+        memory.r_entity.p.y = ENTITY_Y_PADDING;
+
+        memory.b_entity.p.x = ENTITY_X_PADDING;
+        memory.b_entity.p.y = buffer.height - ENTITY_Y_PADDING - memory.b_entity.height;
+
+        memory.t_entity.p.x = ENTITY_X_PADDING;
+        memory.t_entity.p.y = ENTITY_Y_PADDING;
+
         memory.ball.p.x = (buffer.width as f32 *0.5) as i32;
         memory.ball.p.y = (buffer.height as f32 *0.5) as i32;
+
         memory.is_initialized = true;
     }
 
     // TODO(Fermin): Use newtons eq of motion for better movement feeling
     if input.keyboard.buttons.move_up.ended_down {
-        if memory.v_entity.p.y > ENTITY_Y_PADDING {
-            memory.v_entity.p.y -= 1;
+        if memory.l_entity.p.y > ENTITY_Y_PADDING {
+            memory.l_entity.p.y -= 1;
+        }
+        if memory.r_entity.p.y > ENTITY_Y_PADDING {
+            memory.r_entity.p.y -= 1;
         }
     }
     if input.keyboard.buttons.move_down.ended_down {
-        if memory.v_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.v_entity.height {
-            memory.v_entity.p.y += 1;
+        if memory.l_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.l_entity.height {
+            memory.l_entity.p.y += 1;
+        }
+        if memory.r_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.r_entity.height {
+            memory.r_entity.p.y += 1;
         }
     }
     if input.keyboard.buttons.move_left.ended_down {
-        if memory.h_entity.p.x > ENTITY_X_PADDING {
-            memory.h_entity.p.x -= 1;
+        if memory.b_entity.p.x > ENTITY_X_PADDING {
+            memory.b_entity.p.x -= 1;
+        }
+        if memory.t_entity.p.x > ENTITY_X_PADDING {
+            memory.t_entity.p.x -= 1;
         }
     }
     if input.keyboard.buttons.move_right.ended_down {
-        if memory.h_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.h_entity.width {
-            memory.h_entity.p.x += 1;
+        if memory.b_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.b_entity.width {
+            memory.b_entity.p.x += 1;
+        }
+        if memory.t_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.t_entity.width {
+            memory.t_entity.p.x += 1;
         }
     }
 
     draw_rectangle(
-        &memory.v_entity.p,
-        memory.v_entity.width,
-        memory.v_entity.height,
-        &memory.v_entity.color,
+        &memory.l_entity.p,
+        memory.l_entity.width,
+        memory.l_entity.height,
+        &memory.l_entity.color,
         buffer
     );
     draw_rectangle(
-        &memory.h_entity.p,
-        memory.h_entity.width,
-        memory.h_entity.height,
-        &memory.h_entity.color,
+        &memory.r_entity.p,
+        memory.r_entity.width,
+        memory.r_entity.height,
+        &memory.r_entity.color,
+        buffer
+    );
+    draw_rectangle(
+        &memory.t_entity.p,
+        memory.t_entity.width,
+        memory.t_entity.height,
+        &memory.t_entity.color,
+        buffer
+    );
+    draw_rectangle(
+        &memory.b_entity.p,
+        memory.b_entity.width,
+        memory.b_entity.height,
+        &memory.b_entity.color,
         buffer
     );
     draw_rectangle(
