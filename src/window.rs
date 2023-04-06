@@ -21,6 +21,8 @@ use crate::*;
 const WINDOW_CLASS_NAME: PCSTR = s!("win32.Window");
 const DISPLAY_OFFSET_X: i32 = 10;
 const DISPLAY_OFFSET_Y: i32 = 10;
+const BUFFER_WIDTH: i32 = 400;
+const BUFFER_HEIGHT: i32 = 400;
 
 
 pub struct Win32OffscreenBuffer {
@@ -71,7 +73,7 @@ impl Window {
     pub fn new(width: u32, height: u32) -> Result<Box<Self>> {
         println!("Window::new");
 
-        let buffer = Win32OffscreenBuffer::new(300, 300)
+        let buffer = Win32OffscreenBuffer::new(BUFFER_WIDTH, BUFFER_HEIGHT)
             .expect("Error allocating win 32 offscreen buffer");
 
         let instance = unsafe { GetModuleHandleA(None)? };
