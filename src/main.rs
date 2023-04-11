@@ -1,5 +1,6 @@
-use bytes::BytesMut;
-use windows::Win32::System::Performance::QueryPerformanceCounter;
+use std::time::{Duration, Instant};
+use windows::Win32::Media::timeBeginPeriod;
+use std::thread::sleep;
 use windows::core::Result;
 use bytes::BufMut;
 use crate::window::*;
@@ -70,24 +71,37 @@ impl GameInput {
     }
 }
 
-fn win32_get_wallclock() -> i64 {
-    let mut result: i64 = 0;
-    unsafe {QueryPerformanceCounter(&mut result);}
-    return result
-}
-
 fn main() -> Result<()> {
     let mut window = Window::new(1000, 700)?;
     let mut input = GameInput::new();
-    let mut _play_time: i64;
     let mut game_memory = GameMemory::new();
+    // TODO(Fermin): Query monitor refresh rate and force loop to that rate,
+    // GetDC, GetDeviceCaps. Maybe this should go in window.
+    let monitor_refresh_rate = 60.0;
+    let target_seconds_per_frame: f32 = 1.0 / monitor_refresh_rate;
+    // NOTE(Fermin): Set the Windows scheduler granularity to 1ms, 
+    // maybe move this to window?
+    unsafe { timeBeginPeriod(1); }
 
-    let start_time: i64 = win32_get_wallclock();
+    //let process_start_instant = Instant::now();
     while window.window_running {
+        let frame_start_instant = Instant::now();
+
+        input.dt_for_frame = target_seconds_per_frame;
+
         update_and_render(&mut game_memory, &mut window.buffer, &input);
         window.win32_process_pending_messages(&mut input);
-        _play_time = (win32_get_wallclock() - start_time) / 10000000;
-        //println!("Perf counter: {}", play_time);
+
+        let target_ms_per_frame = target_seconds_per_frame * 1000.0;
+        if frame_start_instant.elapsed().as_millis() < target_ms_per_frame as u128 {
+            let ms_until_next_frame: u64 = (target_ms_per_frame as u128 - frame_start_instant.elapsed().as_millis())
+                .try_into()
+                .expect("Error calculating ms until next frame");
+            sleep(Duration::from_millis(ms_until_next_frame)); 
+        }
+        
+        //println!("Play time: {} seconds", process_start_instant.elapsed().as_secs());
+        println!("{} ms/f", frame_start_instant.elapsed().as_millis());
     }
     Ok(())
 }
