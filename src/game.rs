@@ -126,36 +126,37 @@ pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuf
     }
 
     // TODO(Fermin): Use newtons eq of motion for better movement feeling
+    let pixels_per_second = 300.0;
     if input.keyboard.buttons.move_up.ended_down {
         if memory.l_entity.p.y > ENTITY_Y_PADDING {
-            memory.l_entity.p.y -= 1;
+            memory.l_entity.p.y -= (pixels_per_second * input.dt_for_frame).round() as i32;
         }
         if memory.r_entity.p.y > ENTITY_Y_PADDING {
-            memory.r_entity.p.y -= 1;
+            memory.r_entity.p.y -= (pixels_per_second * input.dt_for_frame).round() as i32;
         }
     }
     if input.keyboard.buttons.move_down.ended_down {
         if memory.l_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.l_entity.height {
-            memory.l_entity.p.y += 1;
+            memory.l_entity.p.y += (pixels_per_second * input.dt_for_frame).round() as i32;
         }
         if memory.r_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.r_entity.height {
-            memory.r_entity.p.y += 1;
+            memory.r_entity.p.y += (pixels_per_second * input.dt_for_frame).round() as i32;
         }
     }
     if input.keyboard.buttons.move_left.ended_down {
         if memory.b_entity.p.x > ENTITY_X_PADDING {
-            memory.b_entity.p.x -= 1;
+            memory.b_entity.p.x -= (pixels_per_second * input.dt_for_frame).round() as i32;
         }
         if memory.t_entity.p.x > ENTITY_X_PADDING {
-            memory.t_entity.p.x -= 1;
+            memory.t_entity.p.x -= (pixels_per_second * input.dt_for_frame).round() as i32;
         }
     }
     if input.keyboard.buttons.move_right.ended_down {
         if memory.b_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.b_entity.width {
-            memory.b_entity.p.x += 1;
+            memory.b_entity.p.x += (pixels_per_second * input.dt_for_frame).round() as i32;
         }
         if memory.t_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.t_entity.width {
-            memory.t_entity.p.x += 1;
+            memory.t_entity.p.x += (pixels_per_second * input.dt_for_frame).round() as i32;
         }
     }
 
