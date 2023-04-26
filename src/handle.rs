@@ -16,4 +16,3 @@ impl CheckHandle for HWND {
         }
     }
 }
-

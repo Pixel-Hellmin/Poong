@@ -1,15 +1,14 @@
-use std::time::{Duration, Instant};
-use windows::Win32::Media::timeBeginPeriod;
-use std::thread::sleep;
-use windows::core::Result;
-use bytes::BufMut;
-use crate::window::*;
 use crate::game::*;
+use crate::window::*;
+use bytes::BufMut;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
+use windows::core::Result;
+use windows::Win32::Media::timeBeginPeriod;
 
+mod game;
 mod handle;
 mod window;
-mod game;
-
 
 struct V2 {
     x: i32,
@@ -34,7 +33,7 @@ struct KeyboardInput {
     buttons: InputButtons,
 }
 impl KeyboardInput {
-    fn new () -> Self {
+    fn new() -> Self {
         Self {
             is_connected: false,
             buttons: InputButtons {
@@ -45,7 +44,7 @@ impl KeyboardInput {
                 back: GameButtonState { ended_down: false },
                 start: GameButtonState { ended_down: false },
                 jump: GameButtonState { ended_down: false },
-            }
+            },
         }
     }
 }
@@ -58,14 +57,14 @@ pub struct GameInput {
     mouse_buttons: [GameButtonState; 2],
 }
 impl GameInput {
-    fn new () -> Self {
+    fn new() -> Self {
         Self {
             cursor_pos: V2 { x: 0, y: 0 },
             dt_for_frame: 0.0,
             keyboard: KeyboardInput::new(),
             mouse_buttons: [
                 GameButtonState { ended_down: false },
-                GameButtonState { ended_down: false }
+                GameButtonState { ended_down: false },
             ],
         }
     }
@@ -77,9 +76,11 @@ fn main() -> Result<()> {
     let mut game_memory = GameMemory::new();
     let target_seconds_per_frame: f32 = 1.0 / window.refresh_rate as f32;
 
-    // NOTE(Fermin): Set the Windows scheduler granularity to 1ms, 
+    // NOTE(Fermin): Set the Windows scheduler granularity to 1ms,
     // should this be in window.rs????
-    unsafe { timeBeginPeriod(1); }
+    unsafe {
+        timeBeginPeriod(1);
+    }
 
     //let process_start_instant = Instant::now();
     while window.window_running {
@@ -92,12 +93,13 @@ fn main() -> Result<()> {
 
         let target_ms_per_frame = target_seconds_per_frame * 1000.0;
         if frame_start_instant.elapsed().as_millis() < target_ms_per_frame as u128 {
-            let ms_until_next_frame: u64 = (target_ms_per_frame as u128 - frame_start_instant.elapsed().as_millis())
-                .try_into()
-                .expect("Error calculating ms until next frame");
-            sleep(Duration::from_millis(ms_until_next_frame)); 
+            let ms_until_next_frame: u64 = (target_ms_per_frame as u128
+                - frame_start_instant.elapsed().as_millis())
+            .try_into()
+            .expect("Error calculating ms until next frame");
+            sleep(Duration::from_millis(ms_until_next_frame));
         }
-        
+
         // Debug logs
         //println!("Play time: {} seconds", process_start_instant.elapsed().as_secs());
         //println!("Monitor refresh rate: {}Hz", window.refresh_rate as f32);
