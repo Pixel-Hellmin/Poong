@@ -125,40 +125,55 @@ pub fn update_and_render(memory: &mut GameMemory, buffer: &mut Win32OffscreenBuf
         memory.is_initialized = true;
     }
 
-    // TODO(Fermin): Use newtons eq of motion for better movement feeling
-    let pixels_per_second = 300.0;
+    // TODO(Fermin): Fix entities getting out of bounce
+    // TODO(Fermin): Use floats
+    // TODO(Fermin): Use same struct for each pair??
+    let player_speed = 3000.0; // pixels/s
+    let drag = -8;
+    let mut ddp = V2 { x: 0, y: 0};
+
     if input.keyboard.buttons.move_up.ended_down {
         if memory.l_entity.p.y > ENTITY_Y_PADDING {
-            memory.l_entity.p.y -= (pixels_per_second * input.dt_for_frame).round() as i32;
-        }
-        if memory.r_entity.p.y > ENTITY_Y_PADDING {
-            memory.r_entity.p.y -= (pixels_per_second * input.dt_for_frame).round() as i32;
+            ddp.y = -1;
         }
     }
     if input.keyboard.buttons.move_down.ended_down {
         if memory.l_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.l_entity.height {
-            memory.l_entity.p.y += (pixels_per_second * input.dt_for_frame).round() as i32;
-        }
-        if memory.r_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.r_entity.height {
-            memory.r_entity.p.y += (pixels_per_second * input.dt_for_frame).round() as i32;
+            ddp.y = 1;
         }
     }
     if input.keyboard.buttons.move_left.ended_down {
         if memory.b_entity.p.x > ENTITY_X_PADDING {
-            memory.b_entity.p.x -= (pixels_per_second * input.dt_for_frame).round() as i32;
-        }
-        if memory.t_entity.p.x > ENTITY_X_PADDING {
-            memory.t_entity.p.x -= (pixels_per_second * input.dt_for_frame).round() as i32;
+            ddp.x = -1;
         }
     }
     if input.keyboard.buttons.move_right.ended_down {
         if memory.b_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.b_entity.width {
-            memory.b_entity.p.x += (pixels_per_second * input.dt_for_frame).round() as i32;
-        }
-        if memory.t_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.t_entity.width {
-            memory.t_entity.p.x += (pixels_per_second * input.dt_for_frame).round() as i32;
+            ddp.x = 1;
         }
     }
+
+    ddp.x *= player_speed as i32;
+    ddp.y *= player_speed as i32;
+    ddp.y += drag*memory.l_entity.dp.y;
+    ddp.x += drag*memory.t_entity.dp.x;
+
+    let player_delta = V2 {
+        x: (0.5 * ddp.x as f32 * input.dt_for_frame.powi(2) + memory.t_entity.dp.x as f32 * input.dt_for_frame).round() as i32,
+        y: (0.5 * ddp.y as f32 * input.dt_for_frame.powi(2) + memory.r_entity.dp.y as f32 * input.dt_for_frame).round() as i32,
+    };
+
+    memory.r_entity.p.y += player_delta.y;
+    memory.l_entity.p.y = memory.r_entity.p.y;
+
+    memory.t_entity.p.x += player_delta.x;
+    memory.b_entity.p.x = memory.t_entity.p.x;
+
+    memory.r_entity.dp.y = (ddp.y as f32 * input.dt_for_frame + memory.r_entity.dp.y as f32).round() as i32;
+    memory.l_entity.dp.y = memory.r_entity.dp.y;
+
+    memory.t_entity.dp.x = (ddp.x as f32 * input.dt_for_frame + memory.t_entity.dp.x as f32).round() as i32;
+    memory.b_entity.dp.x = memory.t_entity.dp.x;
 
     draw_rectangle(
         &memory.l_entity.p,
