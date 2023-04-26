@@ -9,7 +9,7 @@ use windows::{
         Graphics::Gdi::{
             BI_RGB, HDC, BITMAPINFOHEADER, EndPaint, BeginPaint, PAINTSTRUCT,
             BITMAPINFO, PatBlt, BLACKNESS, SRCCOPY, DIB_RGB_COLORS,
-            StretchDIBits, GetDC
+            StretchDIBits, GetDC, VREFRESH, GetDeviceCaps
         }
     },
 };
@@ -67,6 +67,7 @@ pub struct Window {
     handle: HWND,
     pub buffer: Win32OffscreenBuffer,
     pub window_running: bool,
+    pub refresh_rate: i32,
 }
 
 impl Window {
@@ -91,9 +92,10 @@ impl Window {
             handle: HWND(0),
             buffer,
             window_running: true,
+            refresh_rate: 30
         });
 
-        let _window = unsafe {
+        let window = unsafe {
             CreateWindowExA(
                 WS_EX_LEFT, // ms: WS_EX_NOREDIRECTIONBITMAP, hmh: 0
                 WINDOW_CLASS_NAME,
@@ -111,6 +113,10 @@ impl Window {
                 .ok()? //NOTE(Fermin): Consider removing this trait
         };
         // unsafe { ShowWindow(window, SW_SHOW) };
+
+        result.refresh_rate = unsafe {
+            GetDeviceCaps(GetDC(window), VREFRESH)
+        };
         
         Ok(result)
     }

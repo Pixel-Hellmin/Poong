@@ -75,12 +75,10 @@ fn main() -> Result<()> {
     let mut window = Window::new(1000, 700)?;
     let mut input = GameInput::new();
     let mut game_memory = GameMemory::new();
-    // TODO(Fermin): Query monitor refresh rate and force loop to that rate,
-    // GetDC, GetDeviceCaps. Maybe this should go in window.
-    let monitor_refresh_rate = 60.0;
-    let target_seconds_per_frame: f32 = 1.0 / monitor_refresh_rate;
+    let target_seconds_per_frame: f32 = 1.0 / window.refresh_rate as f32;
+
     // NOTE(Fermin): Set the Windows scheduler granularity to 1ms, 
-    // maybe move this to window?
+    // should this be in window.rs????
     unsafe { timeBeginPeriod(1); }
 
     //let process_start_instant = Instant::now();
@@ -100,8 +98,11 @@ fn main() -> Result<()> {
             sleep(Duration::from_millis(ms_until_next_frame)); 
         }
         
+        // Debug logs
         //println!("Play time: {} seconds", process_start_instant.elapsed().as_secs());
+        //println!("Monitor refresh rate: {}Hz", window.refresh_rate as f32);
         println!("{} ms/f", frame_start_instant.elapsed().as_millis());
     }
+
     Ok(())
 }
