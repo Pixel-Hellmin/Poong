@@ -145,11 +145,10 @@ pub fn update_and_render(
         memory.is_initialized = true;
     }
 
-    // TODO(Fermin): Use floats
     // TODO(Fermin): Use same struct for each pair??
     // TODO(Fermin): Make vector operations easier
     // TODO(Fermin): Investigate how to avoid casting all the time
-    let player_speed = 3000.0; // pixels/s
+    let player_speed = 3000.0;
     let drag = -7.0;
     let mut ddp = V2 { x: 0.0, y: 0.0 };
 
@@ -172,10 +171,8 @@ pub fn update_and_render(
     ddp.x += drag * memory.t_entity.dp.x;
 
     let player_delta = V2 {
-        x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame)
-            .round(),
+        x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame),
         y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame)
-            .round(),
     };
 
     let new_player_x = memory.b_entity.p.x + player_delta.x;
