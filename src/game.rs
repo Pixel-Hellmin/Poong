@@ -61,9 +61,9 @@ struct Entity {
 impl Entity {
     fn new(width: i32, height: i32, color: Color) -> Self {
         Self {
-            p: V2 { x: 0, y: 0 },
-            dp: V2 { x: 0, y: 0 },
-            ddp: V2 { x: 0, y: 0 },
+            p: V2 { x: 0.0, y: 0.0 },
+            dp: V2 { x: 0.0, y: 0.0 },
+            ddp: V2 { x: 0.0, y: 0.0 },
             color,
             width,
             height,
@@ -81,20 +81,21 @@ fn draw_rectangle(
     let start_x: i32;
     let start_y: i32;
 
-    if pos.x + width > buffer.width {
+    // NOTE(Fermin): double check this into()
+    if pos.x + width as f32 > buffer.width as f32 {
         start_x = buffer.width - width;
-    } else if pos.x < 0 {
+    } else if pos.x < 0.0 {
         start_x = 0;
     } else {
-        start_x = pos.x;
+        start_x = pos.x.round() as i32;
     }
 
-    if pos.y + height > buffer.height {
+    if pos.y + height as f32 > buffer.height as f32 {
         start_y = buffer.height - height;
-    } else if pos.y < 0 {
+    } else if pos.y < 0.0 {
         start_y = 0;
     } else {
-        start_y = pos.y;
+        start_y = pos.y.round() as i32;
     }
 
     let mut row: usize =
@@ -126,20 +127,20 @@ pub fn update_and_render(
     }
 
     if !memory.is_initialized {
-        memory.l_entity.p.x = ENTITY_X_PADDING;
-        memory.l_entity.p.y = ENTITY_Y_PADDING;
+        memory.l_entity.p.x = ENTITY_X_PADDING as f32;
+        memory.l_entity.p.y = ENTITY_Y_PADDING as f32;
 
-        memory.r_entity.p.x = buffer.width - ENTITY_X_PADDING - memory.r_entity.width;
-        memory.r_entity.p.y = ENTITY_Y_PADDING;
+        memory.r_entity.p.x = (buffer.width - ENTITY_X_PADDING - memory.r_entity.width) as f32;
+        memory.r_entity.p.y = ENTITY_Y_PADDING as f32;
 
-        memory.b_entity.p.x = ENTITY_X_PADDING;
-        memory.b_entity.p.y = buffer.height - ENTITY_Y_PADDING - memory.b_entity.height;
+        memory.b_entity.p.x = ENTITY_X_PADDING as f32;
+        memory.b_entity.p.y = (buffer.height - ENTITY_Y_PADDING - memory.b_entity.height) as f32;
 
-        memory.t_entity.p.x = ENTITY_X_PADDING;
-        memory.t_entity.p.y = ENTITY_Y_PADDING;
+        memory.t_entity.p.x = ENTITY_X_PADDING as f32;
+        memory.t_entity.p.y = ENTITY_Y_PADDING as f32;
 
-        memory.ball.p.x = (buffer.width as f32 * 0.5) as i32;
-        memory.ball.p.y = (buffer.height as f32 * 0.5) as i32;
+        memory.ball.p.x = buffer.width as f32 * 0.5;
+        memory.ball.p.y = buffer.height as f32 * 0.5;
 
         memory.is_initialized = true;
     }
@@ -149,59 +150,55 @@ pub fn update_and_render(
     // TODO(Fermin): Make vector operations easier
     // TODO(Fermin): Investigate how to avoid casting all the time
     let player_speed = 3000.0; // pixels/s
-    let drag = -7;
-    let mut ddp = V2 { x: 0, y: 0 };
+    let drag = -7.0;
+    let mut ddp = V2 { x: 0.0, y: 0.0 };
 
     if input.keyboard.buttons.move_up.ended_down {
-        ddp.y = -1;
+        ddp.y = -1.0;
     }
     if input.keyboard.buttons.move_down.ended_down {
-        ddp.y = 1;
+        ddp.y = 1.0;
     }
     if input.keyboard.buttons.move_left.ended_down {
-        ddp.x = -1;
+        ddp.x = -1.0;
     }
     if input.keyboard.buttons.move_right.ended_down {
-        ddp.x = 1;
+        ddp.x = 1.0;
     }
 
-    ddp.x *= player_speed as i32;
-    ddp.y *= player_speed as i32;
+    ddp.x *= player_speed;
+    ddp.y *= player_speed;
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
 
     let player_delta = V2 {
-        x: (0.5 * ddp.x as f32 * input.dt_for_frame.powi(2)
-            + memory.t_entity.dp.x as f32 * input.dt_for_frame)
-            .round() as i32,
-        y: (0.5 * ddp.y as f32 * input.dt_for_frame.powi(2)
-            + memory.r_entity.dp.y as f32 * input.dt_for_frame)
-            .round() as i32,
+        x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame)
+            .round(),
+        y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame)
+            .round(),
     };
 
     let new_player_x = memory.b_entity.p.x + player_delta.x;
     let new_player_y = memory.l_entity.p.y + player_delta.y;
 
     // TODO(Fermin): Add an actual collision detection loop
-    if new_player_y > ENTITY_Y_PADDING
-        && new_player_y < buffer.height - ENTITY_Y_PADDING - memory.l_entity.height
+    if new_player_y > ENTITY_Y_PADDING as f32
+        && new_player_y < (buffer.height - ENTITY_Y_PADDING - memory.l_entity.height) as f32
     {
         memory.r_entity.p.y += player_delta.y;
         memory.l_entity.p.y = memory.r_entity.p.y;
     }
-    if new_player_x > ENTITY_X_PADDING
-        && new_player_x < buffer.width - ENTITY_X_PADDING - memory.b_entity.width
+    if new_player_x > ENTITY_X_PADDING as f32
+        && new_player_x < (buffer.width - ENTITY_X_PADDING - memory.b_entity.width) as f32
     {
         memory.t_entity.p.x += player_delta.x;
         memory.b_entity.p.x = memory.t_entity.p.x;
     }
 
-    memory.r_entity.dp.y =
-        (ddp.y as f32 * input.dt_for_frame + memory.r_entity.dp.y as f32).round() as i32;
+    memory.r_entity.dp.y = ddp.y * input.dt_for_frame + memory.r_entity.dp.y;
     memory.l_entity.dp.y = memory.r_entity.dp.y;
 
-    memory.t_entity.dp.x =
-        (ddp.x as f32 * input.dt_for_frame + memory.t_entity.dp.x as f32).round() as i32;
+    memory.t_entity.dp.x = ddp.x * input.dt_for_frame + memory.t_entity.dp.x;
     memory.b_entity.dp.x = memory.t_entity.dp.x;
 
     draw_rectangle(

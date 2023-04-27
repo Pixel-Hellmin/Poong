@@ -11,9 +11,19 @@ mod handle;
 mod window;
 
 struct V2 {
-    x: i32,
-    y: i32,
+    x: f32,
+    y: f32,
 }
+/*
+impl V2 {
+    fn to_integer(self) -> Self {
+        Self {
+            x: self.x.round() as i32,
+            y: self.y.round() as i32
+        }
+    }
+}
+*/
 
 struct GameButtonState {
     // TODO(Fermin): Half transitions
@@ -59,7 +69,7 @@ pub struct GameInput {
 impl GameInput {
     fn new() -> Self {
         Self {
-            cursor_pos: V2 { x: 0, y: 0 },
+            cursor_pos: V2 { x: 0.0, y: 0.0 },
             dt_for_frame: 0.0,
             keyboard: KeyboardInput::new(),
             mouse_buttons: [

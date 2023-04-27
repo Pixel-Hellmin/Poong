@@ -194,8 +194,8 @@ impl Window {
                 match message.message {
                     WM_MOUSEMOVE => {
                         let (x, y) = Self::get_mouse_position(message.lParam);
-                        input.cursor_pos.x = x as i32 - DISPLAY_OFFSET_X;
-                        input.cursor_pos.y = y as i32 - DISPLAY_OFFSET_Y;
+                        input.cursor_pos.x = x as f32 - DISPLAY_OFFSET_X as f32;
+                        input.cursor_pos.y = y as f32 - DISPLAY_OFFSET_Y as f32;
                         //println!("cursor x: {}, y: {}", input.cursor_pos.x, input.cursor_pos.y);
                     }
                     // NOTE(Fermin): Consider following the same logic for
