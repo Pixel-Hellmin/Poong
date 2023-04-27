@@ -144,32 +144,25 @@ pub fn update_and_render(
         memory.is_initialized = true;
     }
 
-    // TODO(Fermin): Fix entities getting out of bounce
     // TODO(Fermin): Use floats
     // TODO(Fermin): Use same struct for each pair??
+    // TODO(Fermin): Make vector operations easier
+    // TODO(Fermin): Investigate how to avoid casting all the time
     let player_speed = 3000.0; // pixels/s
-    let drag = -8;
+    let drag = -7;
     let mut ddp = V2 { x: 0, y: 0 };
 
     if input.keyboard.buttons.move_up.ended_down {
-        if memory.l_entity.p.y > ENTITY_Y_PADDING {
-            ddp.y = -1;
-        }
+        ddp.y = -1;
     }
     if input.keyboard.buttons.move_down.ended_down {
-        if memory.l_entity.p.y < buffer.height - ENTITY_Y_PADDING - memory.l_entity.height {
-            ddp.y = 1;
-        }
+        ddp.y = 1;
     }
     if input.keyboard.buttons.move_left.ended_down {
-        if memory.b_entity.p.x > ENTITY_X_PADDING {
-            ddp.x = -1;
-        }
+        ddp.x = -1;
     }
     if input.keyboard.buttons.move_right.ended_down {
-        if memory.b_entity.p.x < buffer.width - ENTITY_X_PADDING - memory.b_entity.width {
-            ddp.x = 1;
-        }
+        ddp.x = 1;
     }
 
     ddp.x *= player_speed as i32;
@@ -186,11 +179,22 @@ pub fn update_and_render(
             .round() as i32,
     };
 
-    memory.r_entity.p.y += player_delta.y;
-    memory.l_entity.p.y = memory.r_entity.p.y;
+    let new_player_x = memory.b_entity.p.x + player_delta.x;
+    let new_player_y = memory.l_entity.p.y + player_delta.y;
 
-    memory.t_entity.p.x += player_delta.x;
-    memory.b_entity.p.x = memory.t_entity.p.x;
+    // TODO(Fermin): Add an actual collision detection loop
+    if new_player_y > ENTITY_Y_PADDING
+        && new_player_y < buffer.height - ENTITY_Y_PADDING - memory.l_entity.height
+    {
+        memory.r_entity.p.y += player_delta.y;
+        memory.l_entity.p.y = memory.r_entity.p.y;
+    }
+    if new_player_x > ENTITY_X_PADDING
+        && new_player_x < buffer.width - ENTITY_X_PADDING - memory.b_entity.width
+    {
+        memory.t_entity.p.x += player_delta.x;
+        memory.b_entity.p.x = memory.t_entity.p.x;
+    }
 
     memory.r_entity.dp.y =
         (ddp.y as f32 * input.dt_for_frame + memory.r_entity.dp.y as f32).round() as i32;
