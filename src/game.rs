@@ -168,26 +168,40 @@ pub fn update_and_render(
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
 
-    let player_delta = V2 {
+    let mut player_delta = V2 {
         x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame),
         y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame),
     };
+    let mut new_player_x = memory.b_entity.p.x + player_delta.x;
+    let mut new_player_y = memory.l_entity.p.y + player_delta.y;
 
-    let new_player_x = memory.b_entity.p.x + player_delta.x;
-    let new_player_y = memory.l_entity.p.y + player_delta.y;
-
-    // TODO(Fermin): Add an actual collision detection loop
-    if new_player_y > ENTITY_Y_PADDING as f32
-        && new_player_y < (buffer.height - ENTITY_Y_PADDING - memory.l_entity.height) as f32
-    {
-        memory.r_entity.p.y += player_delta.y;
-        memory.l_entity.p.y = memory.r_entity.p.y;
+    let delta_reduction_factor = 0.8;
+    let collision_iter = 5;
+    for _i in 0..collision_iter {
+        if new_player_y > ENTITY_Y_PADDING as f32
+            && new_player_y < (buffer.height - ENTITY_Y_PADDING - memory.l_entity.height) as f32
+            {
+                memory.r_entity.p.y += player_delta.y;
+                memory.l_entity.p.y = memory.r_entity.p.y;
+                break;
+            }
+        else {
+            player_delta.y *= delta_reduction_factor;
+            new_player_y = memory.l_entity.p.y + player_delta.y;
+        }
     }
-    if new_player_x > ENTITY_X_PADDING as f32
-        && new_player_x < (buffer.width - ENTITY_X_PADDING - memory.b_entity.width) as f32
-    {
-        memory.t_entity.p.x += player_delta.x;
-        memory.b_entity.p.x = memory.t_entity.p.x;
+    for _i in 0..collision_iter {
+        if new_player_x > ENTITY_X_PADDING as f32
+            && new_player_x < (buffer.width - ENTITY_X_PADDING - memory.b_entity.width) as f32
+            {
+                memory.t_entity.p.x += player_delta.x;
+                memory.b_entity.p.x = memory.t_entity.p.x;
+                break;
+            }
+        else {
+            player_delta.x *= delta_reduction_factor;
+            new_player_x = memory.b_entity.p.x + player_delta.x;
+        }
     }
 
     memory.r_entity.dp.y = ddp.y * input.dt_for_frame + memory.r_entity.dp.y;
