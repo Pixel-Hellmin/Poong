@@ -14,16 +14,13 @@ struct V2 {
     x: f32,
     y: f32,
 }
-/*
 impl V2 {
-    fn to_integer(self) -> Self {
-        Self {
-            x: self.x.round() as i32,
-            y: self.y.round() as i32
-        }
+    fn scale_by_factor(&mut self, factor: f32) -> &mut Self {
+        self.x *= factor;
+        self.y *= factor;
+        self
     }
 }
-*/
 
 struct GameButtonState {
     // TODO(Fermin): Half transitions

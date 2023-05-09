@@ -145,9 +145,8 @@ pub fn update_and_render(
         memory.is_initialized = true;
     }
 
-    // TODO(Fermin): Use same struct for each pair??
-    // TODO(Fermin): Make vector operations easier
-    // TODO(Fermin): Investigate how to avoid casting all the time
+    // TODO(Fermin): Use only two structs instead of 4 and offset the pair???
+    // NOTE(Fermin): Is vector the best type for this entities?
     let player_speed = 3000.0;
     let drag = -7.0;
     let mut ddp = V2 { x: 0.0, y: 0.0 };
@@ -165,14 +164,13 @@ pub fn update_and_render(
         ddp.x = 1.0;
     }
 
-    ddp.x *= player_speed;
-    ddp.y *= player_speed;
+    ddp.scale_by_factor(player_speed);
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
 
     let player_delta = V2 {
         x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame),
-        y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame)
+        y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame),
     };
 
     let new_player_x = memory.b_entity.p.x + player_delta.x;
