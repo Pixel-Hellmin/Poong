@@ -69,6 +69,40 @@ impl Entity {
             height,
         }
     }
+    fn handle_entity_collision(&mut self, entity: &mut Entity, h_axis: bool) {
+        // NOTE(Fermin): Double check to improve
+        // TODO(Fermin): Change dir and speed a bit depending on where the ball hits
+        match h_axis {
+            true => {
+                if (self.p.y >= entity.p.y && self.p.y <= entity.p.y + entity.height as f32)
+                    || (self.p.y + self.height as f32 >= entity.p.y && self.p.y + self.height as f32 <= entity.p.y + entity.height as f32) {
+                        if self.ddp.x > 0.0 {
+                            if self.p.x + self.width as f32 >= entity.p.x {
+                                self.ddp.x *= -1.0;
+                            }
+                        } else if self.ddp.x < 0.0 {
+                            if self.p.x <= entity.p.x + entity.width as f32 {
+                                self.ddp.x *= -1.0;
+                            }
+                        }
+                    }
+            },
+            false => {
+                if (self.p.x >= entity.p.x && self.p.x <= entity.p.x + entity.width as f32)
+                    || (self.p.x + self.width as f32 >= entity.p.x && self.p.x + self.width as f32 <= entity.p.x + entity.width as f32) {
+                    if self.ddp.y > 0.0 {
+                        if self.p.y + self.height as f32 >= entity.p.y {
+                            self.ddp.y *= -1.0;
+                        }
+                    } else if self.ddp.y < 0.0 {
+                        if self.p.y <= entity.p.y + entity.height as f32 {
+                            self.ddp.y *= -1.0;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn draw_rectangle(
@@ -141,6 +175,8 @@ pub fn update_and_render(
 
         memory.ball.p.x = buffer.width as f32 * 0.5;
         memory.ball.p.y = buffer.height as f32 * 0.5;
+        // TODO(Fermin): Give a random direction at the start
+        memory.ball.ddp = V2 { x: 30000.0, y: 20000.0 };
 
         memory.is_initialized = true;
     }
@@ -168,9 +204,18 @@ pub fn update_and_render(
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
 
+    let ball_delta = V2 {
+        x: (0.5 * memory.ball.ddp.x * input.dt_for_frame.powi(2) + memory.ball.dp.x * input.dt_for_frame),
+        y: (0.5 * memory.ball.ddp.y * input.dt_for_frame.powi(2) + memory.ball.dp.y * input.dt_for_frame),
+    };
     let mut player_delta = V2 {
         x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame),
         y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame),
+    };
+
+    let new_ball_p = V2 {
+        x: memory.ball.p.x + ball_delta.x,
+        y: memory.ball.p.y + ball_delta.y
     };
     let mut new_player_x = memory.b_entity.p.x + player_delta.x;
     let mut new_player_y = memory.l_entity.p.y + player_delta.y;
@@ -204,11 +249,31 @@ pub fn update_and_render(
         }
     }
 
+    memory.ball.p.y += ball_delta.y;
+    memory.ball.p.x += ball_delta.x;
+
     memory.r_entity.dp.y = ddp.y * input.dt_for_frame + memory.r_entity.dp.y;
     memory.l_entity.dp.y = memory.r_entity.dp.y;
 
     memory.t_entity.dp.x = ddp.x * input.dt_for_frame + memory.t_entity.dp.x;
     memory.b_entity.dp.x = memory.t_entity.dp.x;
+
+    // TODO(Fermin): Handle ball max speed
+    memory.ball.dp.y = 0.0 * input.dt_for_frame;
+    memory.ball.dp.x = 1.0 * input.dt_for_frame;
+    
+    if memory.ball.ddp.x > 0.0 {
+        memory.ball.handle_entity_collision(&mut memory.r_entity, true);
+    }
+    if memory.ball.ddp.x < 0.0 {
+        memory.ball.handle_entity_collision(&mut memory.l_entity, true);
+    }
+    if memory.ball.ddp.y > 0.0 {
+        memory.ball.handle_entity_collision(&mut memory.b_entity, false);
+    }
+    if memory.ball.ddp.y < 0.0 {
+        memory.ball.handle_entity_collision(&mut memory.t_entity, false);
+    }
 
     draw_rectangle(
         &memory.l_entity.p,
