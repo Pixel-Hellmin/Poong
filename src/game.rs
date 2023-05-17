@@ -12,6 +12,7 @@ const BYTES_PER_PIXEL: i32 = 4;
 const ENTITY_Y_PADDING: i32 = 10;
 const ENTITY_X_PADDING: i32 = 10;
 const TILE_SIZE: i32 = 25;
+const BALL_MIN_DDP: f32 = 30_000.0;
 
 pub struct GameMemory {
     l_entity: Entity,
@@ -279,8 +280,7 @@ pub fn update_and_render(
     memory.t_entity.dp.x = ddp.x * input.dt_for_frame + memory.t_entity.dp.x;
     memory.b_entity.dp.x = memory.t_entity.dp.x;
 
-    // TODO(Fermin): Handle ball max speed
-    memory.ball.dp.y = 0.0 * input.dt_for_frame;
+    memory.ball.dp.y = 1.0 * input.dt_for_frame;
     memory.ball.dp.x = 1.0 * input.dt_for_frame;
 
     if memory.ball.ddp.x > 0.0 {
@@ -302,6 +302,21 @@ pub fn update_and_render(
         memory
             .ball
             .handle_entity_collision(&mut memory.t_entity, false);
+    }
+
+    if memory.ball.ddp.x.abs() < BALL_MIN_DDP {
+        if memory.ball.ddp.x > 0.0 {
+            memory.ball.ddp.x = BALL_MIN_DDP;
+        } else {
+            memory.ball.ddp.x = -BALL_MIN_DDP;
+        }
+    }
+    if memory.ball.ddp.y.abs() < BALL_MIN_DDP {
+        if memory.ball.ddp.y > 0.0 {
+            memory.ball.ddp.y = BALL_MIN_DDP;
+        } else {
+            memory.ball.ddp.y = -BALL_MIN_DDP;
+        }
     }
 
     draw_rectangle(
