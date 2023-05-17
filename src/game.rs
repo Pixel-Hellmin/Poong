@@ -1,5 +1,6 @@
 use crate::window::*;
 use crate::*;
+use rand::Rng;
 
 const WHITE: Color = Color {
     r: 255,
@@ -71,31 +72,44 @@ impl Entity {
     }
     fn handle_entity_collision(&mut self, entity: &mut Entity, h_axis: bool) {
         // NOTE(Fermin): Double check to improve
-        // TODO(Fermin): Change dir and speed a bit depending on where the ball hits
+        // TODO(Fermin): Use enum for axis?
+        let dir_mod_range: std::ops::Range<f32> = 1.0..30_000.0;
         match h_axis {
             true => {
                 if (self.p.y >= entity.p.y && self.p.y <= entity.p.y + entity.height as f32)
-                    || (self.p.y + self.height as f32 >= entity.p.y && self.p.y + self.height as f32 <= entity.p.y + entity.height as f32) {
-                        if self.ddp.x > 0.0 {
-                            if self.p.x + self.width as f32 >= entity.p.x {
-                                self.ddp.x *= -1.0;
-                            }
-                        } else if self.ddp.x < 0.0 {
-                            if self.p.x <= entity.p.x + entity.width as f32 {
-                                self.ddp.x *= -1.0;
-                            }
+                    || (self.p.y + self.height as f32 >= entity.p.y
+                        && self.p.y + self.height as f32 <= entity.p.y + entity.height as f32)
+                {
+                    if self.ddp.x > 0.0 {
+                        if self.p.x + self.width as f32 >= entity.p.x {
+                            let y_mod: f32 = get_rand_f32(dir_mod_range);
+                            self.ddp.y += y_mod;
+                            self.ddp.x *= -1.0;
+                        }
+                    } else if self.ddp.x < 0.0 {
+                        if self.p.x <= entity.p.x + entity.width as f32 {
+                            let y_mod: f32 = get_rand_f32(dir_mod_range);
+                            self.ddp.y += y_mod;
+                            self.ddp.x *= -1.0;
                         }
                     }
-            },
+                }
+            }
             false => {
                 if (self.p.x >= entity.p.x && self.p.x <= entity.p.x + entity.width as f32)
-                    || (self.p.x + self.width as f32 >= entity.p.x && self.p.x + self.width as f32 <= entity.p.x + entity.width as f32) {
+                    || (self.p.x + self.width as f32 >= entity.p.x
+                        && self.p.x + self.width as f32 <= entity.p.x + entity.width as f32)
+                {
                     if self.ddp.y > 0.0 {
                         if self.p.y + self.height as f32 >= entity.p.y {
+                            let x_mod: f32 = get_rand_f32(dir_mod_range);
+                            self.ddp.x += x_mod;
                             self.ddp.y *= -1.0;
                         }
                     } else if self.ddp.y < 0.0 {
                         if self.p.y <= entity.p.y + entity.height as f32 {
+                            let x_mod: f32 = get_rand_f32(dir_mod_range);
+                            self.ddp.x += x_mod;
                             self.ddp.y *= -1.0;
                         }
                     }
@@ -103,6 +117,10 @@ impl Entity {
             }
         }
     }
+}
+
+fn get_rand_f32(range: std::ops::Range<f32>) -> f32 {
+    rand::thread_rng().gen_range(range)
 }
 
 fn draw_rectangle(
@@ -176,7 +194,10 @@ pub fn update_and_render(
         memory.ball.p.x = buffer.width as f32 * 0.5;
         memory.ball.p.y = buffer.height as f32 * 0.5;
         // TODO(Fermin): Give a random direction at the start
-        memory.ball.ddp = V2 { x: 30000.0, y: 20000.0 };
+        memory.ball.ddp = V2 {
+            x: 30000.0,
+            y: 20000.0,
+        };
 
         memory.is_initialized = true;
     }
@@ -205,8 +226,10 @@ pub fn update_and_render(
     ddp.x += drag * memory.t_entity.dp.x;
 
     let ball_delta = V2 {
-        x: (0.5 * memory.ball.ddp.x * input.dt_for_frame.powi(2) + memory.ball.dp.x * input.dt_for_frame),
-        y: (0.5 * memory.ball.ddp.y * input.dt_for_frame.powi(2) + memory.ball.dp.y * input.dt_for_frame),
+        x: (0.5 * memory.ball.ddp.x * input.dt_for_frame.powi(2)
+            + memory.ball.dp.x * input.dt_for_frame),
+        y: (0.5 * memory.ball.ddp.y * input.dt_for_frame.powi(2)
+            + memory.ball.dp.y * input.dt_for_frame),
     };
     let mut player_delta = V2 {
         x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame),
@@ -215,7 +238,7 @@ pub fn update_and_render(
 
     let new_ball_p = V2 {
         x: memory.ball.p.x + ball_delta.x,
-        y: memory.ball.p.y + ball_delta.y
+        y: memory.ball.p.y + ball_delta.y,
     };
     let mut new_player_x = memory.b_entity.p.x + player_delta.x;
     let mut new_player_y = memory.l_entity.p.y + player_delta.y;
@@ -225,12 +248,11 @@ pub fn update_and_render(
     for _i in 0..collision_iter {
         if new_player_y > ENTITY_Y_PADDING as f32
             && new_player_y < (buffer.height - ENTITY_Y_PADDING - memory.l_entity.height) as f32
-            {
-                memory.r_entity.p.y += player_delta.y;
-                memory.l_entity.p.y = memory.r_entity.p.y;
-                break;
-            }
-        else {
+        {
+            memory.r_entity.p.y += player_delta.y;
+            memory.l_entity.p.y = memory.r_entity.p.y;
+            break;
+        } else {
             player_delta.y *= delta_reduction_factor;
             new_player_y = memory.l_entity.p.y + player_delta.y;
         }
@@ -238,12 +260,11 @@ pub fn update_and_render(
     for _i in 0..collision_iter {
         if new_player_x > ENTITY_X_PADDING as f32
             && new_player_x < (buffer.width - ENTITY_X_PADDING - memory.b_entity.width) as f32
-            {
-                memory.t_entity.p.x += player_delta.x;
-                memory.b_entity.p.x = memory.t_entity.p.x;
-                break;
-            }
-        else {
+        {
+            memory.t_entity.p.x += player_delta.x;
+            memory.b_entity.p.x = memory.t_entity.p.x;
+            break;
+        } else {
             player_delta.x *= delta_reduction_factor;
             new_player_x = memory.b_entity.p.x + player_delta.x;
         }
@@ -261,18 +282,26 @@ pub fn update_and_render(
     // TODO(Fermin): Handle ball max speed
     memory.ball.dp.y = 0.0 * input.dt_for_frame;
     memory.ball.dp.x = 1.0 * input.dt_for_frame;
-    
+
     if memory.ball.ddp.x > 0.0 {
-        memory.ball.handle_entity_collision(&mut memory.r_entity, true);
+        memory
+            .ball
+            .handle_entity_collision(&mut memory.r_entity, true);
     }
     if memory.ball.ddp.x < 0.0 {
-        memory.ball.handle_entity_collision(&mut memory.l_entity, true);
+        memory
+            .ball
+            .handle_entity_collision(&mut memory.l_entity, true);
     }
     if memory.ball.ddp.y > 0.0 {
-        memory.ball.handle_entity_collision(&mut memory.b_entity, false);
+        memory
+            .ball
+            .handle_entity_collision(&mut memory.b_entity, false);
     }
     if memory.ball.ddp.y < 0.0 {
-        memory.ball.handle_entity_collision(&mut memory.t_entity, false);
+        memory
+            .ball
+            .handle_entity_collision(&mut memory.t_entity, false);
     }
 
     draw_rectangle(
