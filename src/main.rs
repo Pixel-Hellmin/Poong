@@ -20,9 +20,15 @@ impl std::ops::MulAssign<f32> for V2 {
         self.y *= factor;
     }
 }
+impl std::ops::AddAssign<V2> for V2 {
+    fn add_assign(&mut self, a: V2) {
+        self.x += a.x;
+        self.y += a.y;
+    }
+}
 /*
-impl std::ops::Mul<f32> for V2 {
-    type Output = V2;
+   impl std::ops::Mul<f32> for V2 {
+   type Output = V2;
 
     fn mul(self, factor: f32) -> V2 {
         V2{x: self.x * factor, y: self.y * factor}

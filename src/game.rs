@@ -222,7 +222,6 @@ pub fn update_and_render(
         ddp.x = 1.0;
     }
 
-    //ddp.scale_by_factor(player_speed);
     ddp *= player_speed;
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
@@ -273,8 +272,7 @@ pub fn update_and_render(
         }
     }
 
-    memory.ball.p.y += ball_delta.y;
-    memory.ball.p.x += ball_delta.x;
+    memory.ball.p += ball_delta;
 
     memory.r_entity.dp.y = ddp.y * input.dt_for_frame + memory.r_entity.dp.y;
     memory.l_entity.dp.y = memory.r_entity.dp.y;
