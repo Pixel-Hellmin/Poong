@@ -10,20 +10,28 @@ mod game;
 mod handle;
 mod window;
 
+#[derive(Copy, Clone)]
 struct V2 {
     x: f32,
     y: f32,
 }
-impl std::ops::MulAssign<f32> for V2 {
-    fn mul_assign(&mut self, factor: f32) {
-        self.x *= factor;
-        self.y *= factor;
+impl std::ops::Add<V2> for V2 {
+    type Output = V2;
+
+    fn add(self, a: V2) -> V2 {
+        V2{x: self.x + a.x, y: self.y + a.y}
     }
 }
 impl std::ops::AddAssign<V2> for V2 {
     fn add_assign(&mut self, a: V2) {
         self.x += a.x;
         self.y += a.y;
+    }
+}
+impl std::ops::MulAssign<f32> for V2 {
+    fn mul_assign(&mut self, factor: f32) {
+        self.x *= factor;
+        self.y *= factor;
     }
 }
 /*

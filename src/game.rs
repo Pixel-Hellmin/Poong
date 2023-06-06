@@ -74,6 +74,7 @@ impl Entity {
     fn handle_entity_collision(&mut self, entity: &mut Entity, h_axis: bool) {
         // NOTE(Fermin): Double check to improve
         // TODO(Fermin): Use enum for axis?
+        // TODO(Fermin): Refactor using vector operators
         let dir_mod_range: std::ops::Range<f32> = 1.0..30_000.0;
         match h_axis {
             true => {
@@ -226,6 +227,7 @@ pub fn update_and_render(
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
 
+    // TODO(Fermin): use vector operators
     let ball_delta = V2 {
         x: (0.5 * memory.ball.ddp.x * input.dt_for_frame.powi(2)
             + memory.ball.dp.x * input.dt_for_frame),
@@ -237,38 +239,32 @@ pub fn update_and_render(
         y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame),
     };
 
-    // NOTE(Fermin): Are we using this for collision detection?
-    let new_ball_p = V2 {
-        x: memory.ball.p.x + ball_delta.x,
-        y: memory.ball.p.y + ball_delta.y,
-    };
-    let mut new_player_x = memory.b_entity.p.x + player_delta.x;
-    let mut new_player_y = memory.l_entity.p.y + player_delta.y;
+    let mut new_player_p = V2{x: memory.b_entity.p.x, y: memory.l_entity.p.y} + player_delta;
 
     let delta_reduction_factor = 0.8;
     let collision_iter = 5;
     for _i in 0..collision_iter {
-        if new_player_y > ENTITY_Y_PADDING as f32
-            && new_player_y < (buffer.height - ENTITY_Y_PADDING - memory.l_entity.height) as f32
+        if new_player_p.y > ENTITY_Y_PADDING as f32
+            && new_player_p.y < (buffer.height - ENTITY_Y_PADDING - memory.l_entity.height) as f32
         {
             memory.r_entity.p.y += player_delta.y;
             memory.l_entity.p.y = memory.r_entity.p.y;
             break;
         } else {
             player_delta.y *= delta_reduction_factor;
-            new_player_y = memory.l_entity.p.y + player_delta.y;
+            new_player_p.y = memory.l_entity.p.y + player_delta.y;
         }
     }
     for _i in 0..collision_iter {
-        if new_player_x > ENTITY_X_PADDING as f32
-            && new_player_x < (buffer.width - ENTITY_X_PADDING - memory.b_entity.width) as f32
+        if new_player_p.x > ENTITY_X_PADDING as f32
+            && new_player_p.x < (buffer.width - ENTITY_X_PADDING - memory.b_entity.width) as f32
         {
             memory.t_entity.p.x += player_delta.x;
             memory.b_entity.p.x = memory.t_entity.p.x;
             break;
         } else {
             player_delta.x *= delta_reduction_factor;
-            new_player_x = memory.b_entity.p.x + player_delta.x;
+            new_player_p.x = memory.b_entity.p.x + player_delta.x;
         }
     }
 
