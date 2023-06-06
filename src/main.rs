@@ -28,21 +28,19 @@ impl std::ops::AddAssign<V2> for V2 {
         self.y += a.y;
     }
 }
+impl std::ops::Mul<f32> for V2 {
+    type Output = V2;
+
+    fn mul(self, factor: f32) -> V2 {
+        V2{x: self.x * factor, y: self.y * factor}
+    }
+}
 impl std::ops::MulAssign<f32> for V2 {
     fn mul_assign(&mut self, factor: f32) {
         self.x *= factor;
         self.y *= factor;
     }
 }
-/*
-   impl std::ops::Mul<f32> for V2 {
-   type Output = V2;
-
-    fn mul(self, factor: f32) -> V2 {
-        V2{x: self.x * factor, y: self.y * factor}
-    }
-}
-*/
 
 struct GameButtonState {
     // TODO(Fermin): Half transitions

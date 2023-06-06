@@ -227,13 +227,6 @@ pub fn update_and_render(
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
 
-    // TODO(Fermin): use vector operators
-    let ball_delta = V2 {
-        x: (0.5 * memory.ball.ddp.x * input.dt_for_frame.powi(2)
-            + memory.ball.dp.x * input.dt_for_frame),
-        y: (0.5 * memory.ball.ddp.y * input.dt_for_frame.powi(2)
-            + memory.ball.dp.y * input.dt_for_frame),
-    };
     let mut player_delta = V2 {
         x: (0.5 * ddp.x * input.dt_for_frame.powi(2) + memory.t_entity.dp.x * input.dt_for_frame),
         y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame),
@@ -268,6 +261,7 @@ pub fn update_and_render(
         }
     }
 
+    let ball_delta = memory.ball.ddp * 0.5 * input.dt_for_frame.powi(2) + memory.ball.dp * input.dt_for_frame;
     memory.ball.p += ball_delta;
 
     memory.r_entity.dp.y = ddp.y * input.dt_for_frame + memory.r_entity.dp.y;
