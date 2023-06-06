@@ -222,7 +222,8 @@ pub fn update_and_render(
         ddp.x = 1.0;
     }
 
-    ddp.scale_by_factor(player_speed);
+    //ddp.scale_by_factor(player_speed);
+    ddp *= player_speed;
     ddp.y += drag * memory.l_entity.dp.y;
     ddp.x += drag * memory.t_entity.dp.x;
 
@@ -237,6 +238,7 @@ pub fn update_and_render(
         y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame),
     };
 
+    // NOTE(Fermin): Are we using this for collision detection?
     let new_ball_p = V2 {
         x: memory.ball.p.x + ball_delta.x,
         y: memory.ball.p.y + ball_delta.y,
