@@ -180,15 +180,15 @@ pub fn update_and_render(
 
     if !memory.is_initialized {
         memory.l_entity.p.x = ENTITY_X_PADDING as f32;
-        memory.l_entity.p.y = ENTITY_Y_PADDING as f32;
+        memory.l_entity.p.y = (buffer.height / 2 - memory.l_entity.height / 2) as f32;
 
         memory.r_entity.p.x = (buffer.width - ENTITY_X_PADDING - memory.r_entity.width) as f32;
-        memory.r_entity.p.y = ENTITY_Y_PADDING as f32;
+        memory.r_entity.p.y = (buffer.height / 2 - memory.r_entity.height / 2) as f32;
 
-        memory.b_entity.p.x = ENTITY_X_PADDING as f32;
+        memory.b_entity.p.x = (buffer.width / 2 - memory.b_entity.width / 2) as f32;
         memory.b_entity.p.y = (buffer.height - ENTITY_Y_PADDING - memory.b_entity.height) as f32;
 
-        memory.t_entity.p.x = ENTITY_X_PADDING as f32;
+        memory.t_entity.p.x = (buffer.width / 2 - memory.t_entity.width / 2) as f32;
         memory.t_entity.p.y = ENTITY_Y_PADDING as f32;
 
         memory.ball.p.x = buffer.width as f32 * 0.5;
