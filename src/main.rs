@@ -63,13 +63,11 @@ struct InputButtons {
     jump: GameButtonState,
 }
 struct KeyboardInput {
-    is_connected: bool,
     buttons: InputButtons,
 }
 impl KeyboardInput {
     fn new() -> Self {
         Self {
-            is_connected: false,
             buttons: InputButtons {
                 move_up: GameButtonState { ended_down: false },
                 move_down: GameButtonState { ended_down: false },
@@ -104,10 +102,19 @@ impl GameInput {
     }
 }
 
+enum GameStates {
+    Play,
+    DeathScene,
+}
+pub struct GameState {
+    state: GameStates
+}
+
 fn main() -> Result<()> {
     let mut window = Window::new(1000, 700)?;
     let mut input = GameInput::new();
     let mut game_memory = GameMemory::new();
+    let mut game_state = GameState { state: GameStates::Play };
     let target_seconds_per_frame: f32 = 1.0 / window.refresh_rate as f32;
 
     // NOTE(Fermin): Set the Windows scheduler granularity to 1ms,
@@ -122,7 +129,7 @@ fn main() -> Result<()> {
 
         input.dt_for_frame = target_seconds_per_frame;
 
-        update_and_render(&mut game_memory, &mut window.buffer, &input);
+        update_and_render(&mut game_memory, &mut window.buffer, &input, &mut game_state);
         window.win32_process_pending_messages(&mut input);
 
         let target_ms_per_frame = target_seconds_per_frame * 1000.0;
@@ -137,7 +144,7 @@ fn main() -> Result<()> {
         // Debug logs
         //println!("Play time: {} seconds", process_start_instant.elapsed().as_secs());
         //println!("Monitor refresh rate: {}Hz", window.refresh_rate as f32);
-        //println!("{} ms/f", frame_start_instant.elapsed().as_millis());
+        println!("{} ms/f", frame_start_instant.elapsed().as_millis());
     }
 
     Ok(())

@@ -164,20 +164,16 @@ fn draw_rectangle(
     }
 }
 
-enum PauseState {
-    InProgress,
-    Done
-}
-fn pause_for(dur: f32, dt_for_frame: f32) -> PauseState {
+fn pause_for_then<F>(dur: f32, dt_for_frame: f32, then: F)
+where F: FnOnce() {
     static mut PAUSE_SECONDS_ELAPSED:f32 = 0.0;
 
     unsafe {
         if PAUSE_SECONDS_ELAPSED < dur {
             PAUSE_SECONDS_ELAPSED += dt_for_frame;
-            PauseState::InProgress
         } else {
             PAUSE_SECONDS_ELAPSED = 0.0;
-            PauseState::Done
+            then();
         }
     }
 }
@@ -186,7 +182,17 @@ pub fn update_and_render(
     memory: &mut GameMemory,
     buffer: &mut Win32OffscreenBuffer,
     input: &GameInput,
+    game_state: &mut GameState
 ) {
+
+    if let GameStates::DeathScene = game_state.state {
+        pause_for_then(3.0, input.dt_for_frame, || {
+            memory.is_initialized = false;
+            game_state.state = GameStates::Play
+        });
+        return
+    }
+
     buffer.bits.clear();
     // NOTE(FErmin): Clear to white
     // This is shit for performance, try to rerender only necessary pixels.
@@ -197,10 +203,6 @@ pub fn update_and_render(
     }
 
     if !memory.is_initialized {
-        match pause_for(3.0, input.dt_for_frame) {
-            PauseState::InProgress => return,
-            PauseState::Done => ()
-        }
 
         memory.l_entity.p.x = ENTITY_X_PADDING as f32;
         memory.l_entity.p.y = (buffer.height / 2 - memory.l_entity.height / 2) as f32;
@@ -224,6 +226,7 @@ pub fn update_and_render(
 
         memory.is_initialized = true;
     }
+
 
     // TODO(Fermin): Use only two structs instead of 4 and offset the pair???
     // NOTE(Fermin): Is vector the best type for this entities?
@@ -379,6 +382,14 @@ pub fn update_and_render(
             > memory.b_entity.p.y + memory.b_entity.height as f32
     {
         // TODO(Fermin): Death animation (Fill screen with red, slowly??)
-        memory.is_initialized = false;
+        draw_rectangle(
+            &V2{x: 0.0, y: 0.0},
+            buffer.width,
+            buffer.height,
+            &memory.ball.color,
+            buffer,
+        );
+
+        game_state.state = GameStates::DeathScene;
     }
 }
