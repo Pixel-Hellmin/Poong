@@ -73,8 +73,6 @@ impl Entity {
     }
     fn handle_entity_collision(&mut self, entity: &mut Entity, h_axis: bool) {
         // NOTE(Fermin): Double check to improve
-        // TODO(Fermin): Use enum for axis?
-        // TODO(Fermin): Refactor using vector operators
         let dir_mod_range: std::ops::Range<f32> = 1.0..30_000.0;
         match h_axis {
             true => {
@@ -195,10 +193,10 @@ pub fn update_and_render(
 
         memory.ball.p.x = buffer.width as f32 * 0.5;
         memory.ball.p.y = buffer.height as f32 * 0.5;
-        // TODO(Fermin): Give a random direction at the start
+       
         memory.ball.ddp = V2 {
-            x: 30000.0,
-            y: 20000.0,
+            x: get_rand_f32(-50_000.0..50_000.0),
+            y: get_rand_f32(-50_000.0..50_000.0),
         };
 
         memory.is_initialized = true;
@@ -344,4 +342,12 @@ pub fn update_and_render(
         &memory.ball.color,
         buffer,
     );
+
+    if memory.ball.p.x < memory.l_entity.p.x
+        || memory.ball.p.x + memory.ball.width as f32 > memory.r_entity.p.x + memory.r_entity.width as f32
+            || memory.ball.p.y < memory.t_entity.p.y
+            || memory.ball.p.y + memory.ball.height as f32 > memory.b_entity.p.y + memory.b_entity.height as f32 {
+        
+        memory.is_initialized = false;
+    }
 }
