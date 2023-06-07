@@ -10,8 +10,9 @@ mod game;
 mod handle;
 mod window;
 
+// NOTE(Fermin): Do we need a V2 with generic types?
 #[derive(Copy, Clone)]
-struct V2 {
+struct V2 { 
     x: f32,
     y: f32,
 }
@@ -19,7 +20,10 @@ impl std::ops::Add<V2> for V2 {
     type Output = V2;
 
     fn add(self, a: V2) -> V2 {
-        V2{x: self.x + a.x, y: self.y + a.y}
+        V2 {
+            x: self.x + a.x,
+            y: self.y + a.y,
+        }
     }
 }
 impl std::ops::AddAssign<V2> for V2 {
@@ -32,7 +36,10 @@ impl std::ops::Mul<f32> for V2 {
     type Output = V2;
 
     fn mul(self, factor: f32) -> V2 {
-        V2{x: self.x * factor, y: self.y * factor}
+        V2 {
+            x: self.x * factor,
+            y: self.y * factor,
+        }
     }
 }
 impl std::ops::MulAssign<f32> for V2 {
@@ -130,7 +137,7 @@ fn main() -> Result<()> {
         // Debug logs
         //println!("Play time: {} seconds", process_start_instant.elapsed().as_secs());
         //println!("Monitor refresh rate: {}Hz", window.refresh_rate as f32);
-        println!("{} ms/f", frame_start_instant.elapsed().as_millis());
+        //println!("{} ms/f", frame_start_instant.elapsed().as_millis());
     }
 
     Ok(())

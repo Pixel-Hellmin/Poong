@@ -164,6 +164,24 @@ fn draw_rectangle(
     }
 }
 
+enum PauseState {
+    InProgress,
+    Done
+}
+fn pause_for(dur: f32, dt_for_frame: f32) -> PauseState {
+    static mut PAUSE_SECONDS_ELAPSED:f32 = 0.0;
+
+    unsafe {
+        if PAUSE_SECONDS_ELAPSED < dur {
+            PAUSE_SECONDS_ELAPSED += dt_for_frame;
+            PauseState::InProgress
+        } else {
+            PAUSE_SECONDS_ELAPSED = 0.0;
+            PauseState::Done
+        }
+    }
+}
+
 pub fn update_and_render(
     memory: &mut GameMemory,
     buffer: &mut Win32OffscreenBuffer,
@@ -179,6 +197,11 @@ pub fn update_and_render(
     }
 
     if !memory.is_initialized {
+        match pause_for(3.0, input.dt_for_frame) {
+            PauseState::InProgress => return,
+            PauseState::Done => ()
+        }
+
         memory.l_entity.p.x = ENTITY_X_PADDING as f32;
         memory.l_entity.p.y = (buffer.height / 2 - memory.l_entity.height / 2) as f32;
 
@@ -193,7 +216,7 @@ pub fn update_and_render(
 
         memory.ball.p.x = buffer.width as f32 * 0.5;
         memory.ball.p.y = buffer.height as f32 * 0.5;
-       
+
         memory.ball.ddp = V2 {
             x: get_rand_f32(-50_000.0..50_000.0),
             y: get_rand_f32(-50_000.0..50_000.0),
@@ -230,7 +253,10 @@ pub fn update_and_render(
         y: (0.5 * ddp.y * input.dt_for_frame.powi(2) + memory.r_entity.dp.y * input.dt_for_frame),
     };
 
-    let mut new_player_p = V2{x: memory.b_entity.p.x, y: memory.l_entity.p.y} + player_delta;
+    let mut new_player_p = V2 {
+        x: memory.b_entity.p.x,
+        y: memory.l_entity.p.y,
+    } + player_delta;
 
     let delta_reduction_factor = 0.8;
     let collision_iter = 5;
@@ -259,7 +285,8 @@ pub fn update_and_render(
         }
     }
 
-    let ball_delta = memory.ball.ddp * 0.5 * input.dt_for_frame.powi(2) + memory.ball.dp * input.dt_for_frame;
+    let ball_delta =
+        memory.ball.ddp * 0.5 * input.dt_for_frame.powi(2) + memory.ball.dp * input.dt_for_frame;
     memory.ball.p += ball_delta;
 
     memory.r_entity.dp.y = ddp.y * input.dt_for_frame + memory.r_entity.dp.y;
@@ -343,11 +370,15 @@ pub fn update_and_render(
         buffer,
     );
 
+    // NOTE(Fermin): Check if ball is out of bounds
     if memory.ball.p.x < memory.l_entity.p.x
-        || memory.ball.p.x + memory.ball.width as f32 > memory.r_entity.p.x + memory.r_entity.width as f32
-            || memory.ball.p.y < memory.t_entity.p.y
-            || memory.ball.p.y + memory.ball.height as f32 > memory.b_entity.p.y + memory.b_entity.height as f32 {
-        
+        || memory.ball.p.x + memory.ball.width as f32
+            > memory.r_entity.p.x + memory.r_entity.width as f32
+        || memory.ball.p.y < memory.t_entity.p.y
+        || memory.ball.p.y + memory.ball.height as f32
+            > memory.b_entity.p.y + memory.b_entity.height as f32
+    {
+        // TODO(Fermin): Death animation (Fill screen with red, slowly??)
         memory.is_initialized = false;
     }
 }
