@@ -111,7 +111,7 @@ pub struct GameState {
 }
 
 fn main() -> Result<()> {
-    let mut window = Window::new(1000, 700)?;
+    let mut window = Window::new(435, 460)?;
     let mut input = GameInput::new();
     let mut game_memory = GameMemory::new();
     let mut game_state = GameState { state: GameStates::Play };
