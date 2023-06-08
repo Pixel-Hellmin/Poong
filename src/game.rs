@@ -2,16 +2,16 @@ use crate::window::*;
 use crate::*;
 use rand::Rng;
 
-const WHITE: Color = Color {
-    r: 255,
-    g: 255,
-    b: 255,
-    a: 255,
-};
+const BABY_PINK: Color   = Color { r: 250, g: 193, b: 235, a: 255, };
+const DARK_BLUE: Color   = Color { r:  15, g:   5, b:  67, a: 255, };
+const NEON_MINT: Color   = Color { r:   1, g: 255, b: 198, a: 255, };
+const NEON_YELLOW: Color = Color { r: 253, g: 255, b: 100, a: 255, };
+const RED: Color         = Color { r: 253, g:  61, b:  62, a: 255, };
 const BYTES_PER_PIXEL: i32 = 4;
 const ENTITY_Y_PADDING: i32 = 10;
 const ENTITY_X_PADDING: i32 = 10;
-const TILE_SIZE: i32 = 25;
+const BALL_SIZE: i32 = 10;
+const PLAYER_WIDTH: i32 = 8;
 const BALL_MIN_DDP: f32 = 30_000.0;
 
 static mut RECTANGLES_TO_CLEAR_NEXT_FRAME: Vec<RectForClear> = Vec::new();
@@ -27,11 +27,11 @@ pub struct GameMemory {
 impl GameMemory {
     pub fn new() -> Self {
         Self {
-            l_entity: Entity::new(TILE_SIZE, TILE_SIZE * 2, Color::new(120, 130, 170, 255)),
-            r_entity: Entity::new(TILE_SIZE, TILE_SIZE * 2, Color::new(120, 130, 170, 255)),
-            b_entity: Entity::new(TILE_SIZE * 2, TILE_SIZE, Color::new(120, 130, 170, 255)),
-            t_entity: Entity::new(TILE_SIZE * 2, TILE_SIZE, Color::new(120, 130, 170, 255)),
-            ball: Entity::new(TILE_SIZE, TILE_SIZE, Color::new(220, 30, 70, 255)),
+            l_entity: Entity::new(PLAYER_WIDTH, PLAYER_WIDTH * 5, BABY_PINK),
+            r_entity: Entity::new(PLAYER_WIDTH, PLAYER_WIDTH * 5, BABY_PINK),
+            b_entity: Entity::new(PLAYER_WIDTH * 5, PLAYER_WIDTH, NEON_YELLOW),
+            t_entity: Entity::new(PLAYER_WIDTH * 5, PLAYER_WIDTH, NEON_YELLOW),
+            ball: Entity::new(BALL_SIZE, BALL_SIZE, NEON_MINT),
             is_initialized: false,
         }
     }
@@ -235,7 +235,7 @@ pub fn update_and_render(
         buffer.bits.clear();
         for _y in 0..buffer.height {
             for _x in 0..buffer.width {
-                buffer.bits.put_i32(WHITE.get_i32());
+                buffer.bits.put_i32(DARK_BLUE.get_i32());
             }
         }
 
@@ -248,7 +248,7 @@ pub fn update_and_render(
                 &rectangle.p,
                 rectangle.width,
                 rectangle.height,
-                &WHITE,
+                &DARK_BLUE,
                 buffer,
             );
         }
@@ -421,7 +421,7 @@ pub fn update_and_render(
             &V2 { x: 0.0, y: 0.0 },
             buffer.width,
             buffer.height,
-            &memory.ball.color,
+            &RED,
             buffer,
         );
 
