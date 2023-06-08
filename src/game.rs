@@ -3,10 +3,10 @@ use crate::*;
 use rand::Rng;
 
 const BABY_PINK: Color   = Color { r: 250, g: 193, b: 235, a: 255, };
-const DARK_BLUE: Color   = Color { r:  15, g:   5, b:  67, a: 255, };
+const DARK_BLUE: Color   = Color { r:   3, g:  38, b:  82, a: 255, };
 const NEON_MINT: Color   = Color { r:   1, g: 255, b: 198, a: 255, };
 const NEON_YELLOW: Color = Color { r: 253, g: 255, b: 100, a: 255, };
-const RED: Color         = Color { r: 253, g:  61, b:  62, a: 255, };
+const RED: Color         = Color { r: 254, g:  80, b: 102, a: 255, };
 const BYTES_PER_PIXEL: i32 = 4;
 const ENTITY_Y_PADDING: i32 = 10;
 const ENTITY_X_PADDING: i32 = 10;
@@ -44,9 +44,6 @@ struct Color {
     a: i32,
 }
 impl Color {
-    fn new(r: i32, g: i32, b: i32, a: i32) -> Self {
-        Self { r, g, b, a }
-    }
     fn get_i32(&self) -> i32 {
         // NOTE(Fermin): Pixel -> BB GG RR AA
         let result: i32 = (self.b << 24) | (self.g << 16) | (self.r << 8) | self.a;

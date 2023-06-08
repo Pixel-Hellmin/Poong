@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use crate::game::*;
 use crate::window::*;
 use bytes::BufMut;
@@ -151,7 +153,7 @@ fn main() -> Result<()> {
         // Debug logs
         //println!("Play time: {} seconds", process_start_instant.elapsed().as_secs());
         //println!("Monitor refresh rate: {}Hz", window.refresh_rate as f32);
-        println!("{} ms/f", frame_start_instant.elapsed().as_millis());
+        //println!("{} ms/f", frame_start_instant.elapsed().as_millis());
     }
 
     Ok(())

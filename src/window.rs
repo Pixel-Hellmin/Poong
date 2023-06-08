@@ -89,14 +89,14 @@ impl Window {
             handle: HWND(0),
             buffer,
             window_running: true,
-            refresh_rate: 30,
+            refresh_rate: 60,
         });
 
         let window = unsafe {
             CreateWindowExA(
                 WS_EX_LEFT, // ms: WS_EX_NOREDIRECTIONBITMAP, hmh: 0
                 WINDOW_CLASS_NAME,
-                &s!("win32_window_binch"),
+                &s!("Poong"),
                 WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                 CW_USEDEFAULT,
                 CW_USEDEFAULT,
