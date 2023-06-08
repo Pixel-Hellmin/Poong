@@ -14,6 +14,8 @@ const ENTITY_X_PADDING: i32 = 10;
 const TILE_SIZE: i32 = 25;
 const BALL_MIN_DDP: f32 = 30_000.0;
 
+static mut RECTANGLES_TO_CLEAR_NEXT_FRAME: Vec<RectForClear> = Vec::new();
+
 pub struct GameMemory {
     l_entity: Entity,
     r_entity: Entity,
@@ -49,6 +51,21 @@ impl Color {
         // NOTE(Fermin): Pixel -> BB GG RR AA
         let result: i32 = (self.b << 24) | (self.g << 16) | (self.r << 8) | self.a;
         result
+    }
+}
+
+struct RectForClear {
+    p: V2,
+    width: i32,
+    height: i32,
+}
+impl RectForClear {
+    fn new_from_entity(entity: &Entity) -> Self {
+        Self {
+            p: entity.p,
+            width: entity.width,
+            height: entity.height,
+        }
     }
 }
 
@@ -165,8 +182,10 @@ fn draw_rectangle(
 }
 
 fn pause_for_then<F>(dur: f32, dt_for_frame: f32, then: F)
-where F: FnOnce() {
-    static mut PAUSE_SECONDS_ELAPSED:f32 = 0.0;
+where
+    F: FnOnce(),
+{
+    static mut PAUSE_SECONDS_ELAPSED: f32 = 0.0;
 
     unsafe {
         if PAUSE_SECONDS_ELAPSED < dur {
@@ -182,28 +201,17 @@ pub fn update_and_render(
     memory: &mut GameMemory,
     buffer: &mut Win32OffscreenBuffer,
     input: &GameInput,
-    game_state: &mut GameState
+    game_state: &mut GameState,
 ) {
-
     if let GameStates::DeathScene = game_state.state {
         pause_for_then(3.0, input.dt_for_frame, || {
             memory.is_initialized = false;
             game_state.state = GameStates::Play
         });
-        return
-    }
-
-    buffer.bits.clear();
-    // NOTE(FErmin): Clear to white
-    // This is shit for performance, try to rerender only necessary pixels.
-    for _y in 0..buffer.height {
-        for _x in 0..buffer.width {
-            buffer.bits.put_i32(WHITE.get_i32());
-        }
+        return;
     }
 
     if !memory.is_initialized {
-
         memory.l_entity.p.x = ENTITY_X_PADDING as f32;
         memory.l_entity.p.y = (buffer.height / 2 - memory.l_entity.height / 2) as f32;
 
@@ -224,9 +232,28 @@ pub fn update_and_render(
             y: get_rand_f32(-50_000.0..50_000.0),
         };
 
+        buffer.bits.clear();
+        for _y in 0..buffer.height {
+            for _x in 0..buffer.width {
+                buffer.bits.put_i32(WHITE.get_i32());
+            }
+        }
+
         memory.is_initialized = true;
     }
 
+    unsafe {
+        for rectangle in &RECTANGLES_TO_CLEAR_NEXT_FRAME {
+            draw_rectangle(
+                &rectangle.p,
+                rectangle.width,
+                rectangle.height,
+                &WHITE,
+                buffer,
+            );
+        }
+        RECTANGLES_TO_CLEAR_NEXT_FRAME.clear();
+    }
 
     // TODO(Fermin): Use only two structs instead of 4 and offset the pair???
     // NOTE(Fermin): Is vector the best type for this entities?
@@ -373,6 +400,14 @@ pub fn update_and_render(
         buffer,
     );
 
+    unsafe {
+        RECTANGLES_TO_CLEAR_NEXT_FRAME.push(RectForClear::new_from_entity(&memory.l_entity));
+        RECTANGLES_TO_CLEAR_NEXT_FRAME.push(RectForClear::new_from_entity(&memory.r_entity));
+        RECTANGLES_TO_CLEAR_NEXT_FRAME.push(RectForClear::new_from_entity(&memory.t_entity));
+        RECTANGLES_TO_CLEAR_NEXT_FRAME.push(RectForClear::new_from_entity(&memory.b_entity));
+        RECTANGLES_TO_CLEAR_NEXT_FRAME.push(RectForClear::new_from_entity(&memory.ball));
+    }
+
     // NOTE(Fermin): Check if ball is out of bounds
     if memory.ball.p.x < memory.l_entity.p.x
         || memory.ball.p.x + memory.ball.width as f32
@@ -383,7 +418,7 @@ pub fn update_and_render(
     {
         // TODO(Fermin): Death animation (Fill screen with red, slowly??)
         draw_rectangle(
-            &V2{x: 0.0, y: 0.0},
+            &V2 { x: 0.0, y: 0.0 },
             buffer.width,
             buffer.height,
             &memory.ball.color,

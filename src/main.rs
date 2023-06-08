@@ -12,7 +12,7 @@ mod window;
 
 // NOTE(Fermin): Do we need a V2 with generic types?
 #[derive(Copy, Clone)]
-struct V2 { 
+struct V2 {
     x: f32,
     y: f32,
 }
@@ -107,14 +107,16 @@ enum GameStates {
     DeathScene,
 }
 pub struct GameState {
-    state: GameStates
+    state: GameStates,
 }
 
 fn main() -> Result<()> {
     let mut window = Window::new(435, 460)?;
     let mut input = GameInput::new();
     let mut game_memory = GameMemory::new();
-    let mut game_state = GameState { state: GameStates::Play };
+    let mut game_state = GameState {
+        state: GameStates::Play,
+    };
     let target_seconds_per_frame: f32 = 1.0 / window.refresh_rate as f32;
 
     // NOTE(Fermin): Set the Windows scheduler granularity to 1ms,
@@ -129,7 +131,12 @@ fn main() -> Result<()> {
 
         input.dt_for_frame = target_seconds_per_frame;
 
-        update_and_render(&mut game_memory, &mut window.buffer, &input, &mut game_state);
+        update_and_render(
+            &mut game_memory,
+            &mut window.buffer,
+            &input,
+            &mut game_state,
+        );
         window.win32_process_pending_messages(&mut input);
 
         let target_ms_per_frame = target_seconds_per_frame * 1000.0;
